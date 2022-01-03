@@ -160,6 +160,7 @@ export const initReservesByHelper = async (
 
     console.log(`  - Reserve ready for: ${chunkedSymbols[chunkIndex].join(', ')}`);
     console.log('    * gasUsed', tx3.gasUsed.toString());
+    //console.log ("chunkedInitInputParams:"+JSON.stringify(chunkedInitInputParams));
   }
 };
 

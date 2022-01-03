@@ -185,6 +185,14 @@ interface ILendingPool {
     uint16 referralCode
   ) external;
 
+  function depositFund(
+    address asset, //_denominationAsset
+    uint256 amount,
+    address onBehalfOf, //_fundOwner
+    uint16 referralCode,
+    DataTypes.EnzymeFundData calldata enzymeFundData
+  ) external;
+
   /**
    * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
    * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC

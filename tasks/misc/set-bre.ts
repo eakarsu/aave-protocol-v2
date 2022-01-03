@@ -41,8 +41,9 @@ task(`set-DRE`, `Inits the DRE, to have access to all the plugins' objects`).set
       }
     }
     console.log('  - Network :', _DRE.network.name);
-
+    console.log('Before calling setDRE:' + _DRE);
     setDRE(_DRE);
+    console.log('After calling setDRE:' + _DRE);
     return _DRE;
   }
 );

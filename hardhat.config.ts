@@ -63,12 +63,14 @@ const getCommonNetworkConfig = (networkName: eNetwork, networkId: number) => ({
   gasMultiplier: DEFAULT_GAS_MUL,
   gasPrice: NETWORKS_DEFAULT_GAS[networkName],
   chainId: networkId,
+  accounts: ["0x2c283ea64fe7352dd1b1125723a260524e9ad0a6c0a8008b240f904265c0cfd2"],
+  /*
   accounts: {
     mnemonic: MNEMONIC,
     path: MNEMONIC_PATH,
     initialIndex: 0,
     count: 20,
-  },
+  },*/
 });
 
 let forkMode;
@@ -110,13 +112,14 @@ const buidlerConfig: HardhatUserConfig = {
     xdai: getCommonNetworkConfig(eXDaiNetwork.xdai, 100),
     avalanche: getCommonNetworkConfig(eAvalancheNetwork.avalanche, 43114),
     fuji: getCommonNetworkConfig(eAvalancheNetwork.fuji, 43113),
+    
     hardhat: {
       hardfork: 'berlin',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
       gas: DEFAULT_BLOCK_GAS_LIMIT,
       gasPrice: 8000000000,
       allowUnlimitedContractSize: UNLIMITED_BYTECODE_SIZE,
-      chainId: BUIDLEREVM_CHAINID,
+      chainId: 1,//BUIDLEREVM_CHAINID,
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
       accounts: accounts.map(({ secretKey, balance }: { secretKey: string; balance: string }) => ({
@@ -125,6 +128,7 @@ const buidlerConfig: HardhatUserConfig = {
       })),
       forking: buildForkConfig(),
     },
+    
     buidlerevm_docker: {
       hardfork: 'berlin',
       blockGasLimit: 9500000,
@@ -136,11 +140,13 @@ const buidlerConfig: HardhatUserConfig = {
       url: 'http://localhost:8545',
     },
     localhost: {
+      
       accounts: [
         '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
         '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
         '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
       ],
+      
       chainId: 1,
       //chainId: 31337,
       loggingEnabled: true,

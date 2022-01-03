@@ -127,7 +127,7 @@ contract AToken is
     require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
     _burn(user, amountScaled);
 
-    IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
+    IERC20(_underlyingAsset).transfer(receiverOfUnderlying, amount);
 
     emit Transfer(user, address(0), amount);
     emit Burn(user, receiverOfUnderlying, amount, index);
@@ -273,7 +273,7 @@ contract AToken is
   /**
    * @dev Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
    **/
-  function UNDERLYING_ASSET_ADDRESS() public override view returns (address) {
+  function UNDERLYING_ASSET_ADDRESS() public view override returns (address) {
     return _underlyingAsset;
   }
 
@@ -311,7 +311,7 @@ contract AToken is
     onlyLendingPool
     returns (uint256)
   {
-    IERC20(_underlyingAsset).safeTransfer(target, amount);
+    IERC20(_underlyingAsset).transfer(target, amount);
     return amount;
   }
 

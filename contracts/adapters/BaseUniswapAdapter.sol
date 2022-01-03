@@ -292,7 +292,7 @@ abstract contract BaseUniswapAdapter is FlashLoanReceiverBase, IBaseUniswapAdapt
     }
 
     // transfer from user to adapter
-    IERC20(reserveAToken).safeTransferFrom(user, address(this), amount);
+    IERC20(reserveAToken).transferFrom(user, address(this), amount);
 
     // withdraw reserve
     LENDING_POOL.withdraw(reserve, amount, address(this));

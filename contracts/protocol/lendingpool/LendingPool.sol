@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
+import 'hardhat/console.sol';
 
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
@@ -25,6 +26,8 @@ import {ReserveConfiguration} from '../libraries/configuration/ReserveConfigurat
 import {UserConfiguration} from '../libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {LendingPoolStorage} from './LendingPoolStorage.sol';
+
+import {IFundDeployer} from '../../interfaces/IFundDeployer.sol';
 
 /**
  * @title LendingPool contract
@@ -101,6 +104,46 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
    *   0 if the action is executed directly by the user, without any middle-man
    **/
+  function depositFund(
+    address asset, //_denominationAsset
+    uint256 amount,
+    address onBehalfOf,
+    uint16 referralCode,
+    DataTypes.EnzymeFundData calldata enzymeFundData
+  ) external override whenNotPaused {
+    DataTypes.ReserveData storage reserve = _reserves[asset];
+
+    ValidationLogic.validateDeposit(reserve, amount);
+
+    address aToken = reserve.aTokenAddress;
+
+    reserve.updateState();
+    reserve.updateInterestRates(asset, aToken, amount, 0);
+
+    IERC20(asset).transferFrom(msg.sender, aToken, amount);
+
+    bool isFirstDeposit = IAToken(aToken).mint(onBehalfOf, amount, reserve.liquidityIndex);
+
+    if (isFirstDeposit) {
+      _usersConfig[onBehalfOf].setUsingAsCollateral(reserve.id, true);
+      emit ReserveUsedAsCollateralEnabled(asset, onBehalfOf);
+    }
+
+    console.log('fund Owner:%s', msg.sender);
+    console.log('fund name:%s', enzymeFundData.fundName);
+    console.log('asset:%s', asset);
+    //Create enzyme fund now
+    IFundDeployer(enzymeFundData.fundDeployer).createNewFund(
+      msg.sender,
+      enzymeFundData.fundName,
+      asset,
+      enzymeFundData.sharesActionTimelock,
+      enzymeFundData.feeManagerConfigData,
+      enzymeFundData.policyManagerConfigData
+    );
+    emit Deposit(asset, msg.sender, onBehalfOf, amount, referralCode);
+  }
+
   function deposit(
     address asset,
     uint256 amount,
@@ -116,7 +159,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     reserve.updateState();
     reserve.updateInterestRates(asset, aToken, amount, 0);
 
-    IERC20(asset).safeTransferFrom(msg.sender, aToken, amount);
+    IERC20(asset).transferFrom(msg.sender, aToken, amount);
 
     bool isFirstDeposit = IAToken(aToken).mint(onBehalfOf, amount, reserve.liquidityIndex);
 
@@ -280,7 +323,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[onBehalfOf].setBorrowing(reserve.id, false);
     }
 
-    IERC20(asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
+    IERC20(asset).transferFrom(msg.sender, aToken, paybackAmount);
 
     IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
 
@@ -531,7 +574,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
           0
         );
 
-        IERC20(vars.currentAsset).safeTransferFrom(
+        IERC20(vars.currentAsset).transferFrom(
           receiverAddress,
           vars.currentATokenAddress,
           vars.currentAmountPlusPremium
