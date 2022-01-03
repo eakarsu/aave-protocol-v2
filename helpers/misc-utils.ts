@@ -12,6 +12,7 @@ import { isZeroAddress } from 'ethereumjs-util';
 import { SignerWithAddress } from '../test-suites/test-aave/helpers/make-suite';
 import { usingTenderly } from './tenderly-utils';
 
+const contractGetters = require('./contracts-getters');
 export const toWad = (value: string | number) => new BigNumber(value).times(WAD).toFixed();
 
 export const bnToBigNumber = (amount: BN): BigNumber => new BigNumber(<any>amount);
@@ -95,7 +96,7 @@ interface DbEntry {
   };
 }
 
-export const printContracts = () => {
+export const printContracts = async () => {
   const network = DRE.network.name;
   const db = getDb();
   console.log('Contracts deployed at', network);
@@ -109,6 +110,14 @@ export const printContracts = () => {
 
   console.log('N# Contracts:', entries.length);
   console.log(contractsPrint.join('\n'), '\n');
+
+  const protocolProvider = await contractGetters.getAaveProtocolDataProvider();
+  const atokens = await protocolProvider.getAllATokens();
+  console.log('atokens:' + atokens);
+
+  atokens.forEach((token) => {
+    console.log(token.symbol + ':' + token.tokenAddress);
+  });
 };
 
 export const notFalsyOrZeroAddress = (address: tEthereumAddress | null | undefined): boolean => {

@@ -18,6 +18,10 @@ task('aave:dev', 'Deploy development enviroment')
     console.log('Migration started\n');
 
     console.log('1. Deploy mock tokens');
+    ///run this seperately. enzyme finance depends on aave tokens but aave depends on enzyme as well
+    //First run deploy tokens and
+    //then run deploy enzyme
+    //then deploy aave other stuff ,that is, this task
     await localBRE.run('dev:deploy-mock-tokens', { verify });
 
     console.log('2. Deploy address provider');

@@ -27,6 +27,14 @@ library DataTypes {
     uint8 id;
   }
 
+  struct EnzymeFundData {
+    address fundDeployer;
+    string fundName;
+    uint256 sharesActionTimelock;
+    bytes feeManagerConfigData;
+    bytes policyManagerConfigData;
+  }
+
   struct ReserveConfigurationMap {
     //bit 0-15: LTV
     //bit 16-31: Liq. threshold

@@ -13,7 +13,7 @@ import {Address} from './Address.sol';
  * throw on failure) are also supported, non-reverting calls are assumed to be
  * successful.
  * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ * which allows you to call the safe operations as `token.transfer(...)`, etc.
  */
 library SafeERC20 {
   using SafeMath for uint256;
