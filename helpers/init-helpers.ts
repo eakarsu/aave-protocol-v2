@@ -44,6 +44,8 @@ export const initReservesByHelper = async (
 ) => {
   const addressProvider = await getLendingPoolAddressesProvider();
 
+  console.log('');
+
   // CHUNK CONFIGURATION
   const initChunks = 1;
 

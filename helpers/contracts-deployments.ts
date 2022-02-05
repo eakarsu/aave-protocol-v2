@@ -55,6 +55,8 @@ import {
   UiPoolDataProviderV2V3Factory,
   UiIncentiveDataProviderV2V3,
   UiIncentiveDataProviderV2Factory,
+  EnzymeLendingPoolManager,
+  EnzymeLendingPoolManagerFactory,
 } from '../types';
 import {
   withSaveAndVerify,
@@ -244,6 +246,17 @@ export const deployAaveLibraries = async (
     ['__$de8c0cf1a7d7c36c802af9a64fb9d86036$__']: validationLogic.address,
     ['__$22cd43a9dda9ce44e9b92ba393b88fb9ac$__']: reserveLogic.address,
   };
+};
+
+export const deployEnzymeLendingPool = async (verify?: boolean) => {
+  const enzymeLendingPoolImpl = await new EnzymeLendingPoolManagerFactory(
+    await getFirstSigner()
+  ).deploy();
+  await insertContractAddressInDb(
+    eContractid.EnzymeLendingPoolManager,
+    enzymeLendingPoolImpl.address
+  );
+  return withSaveAndVerify(enzymeLendingPoolImpl, eContractid.EnzymeLendingPoolManager, [], verify);
 };
 
 export const deployLendingPool = async (verify?: boolean) => {

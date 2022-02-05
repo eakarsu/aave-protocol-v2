@@ -31,6 +31,8 @@ task('dev:initialize-lending-pool', 'Initialize lending pool configuration.')
   .addFlag('verify', 'Verify contracts at Etherscan')
   .addParam('pool', `Pool name to retrieve configuration, supported: ${Object.values(ConfigNames)}`)
   .setAction(async ({ verify, pool }, localBRE) => {
+    console.log('dev:initialize-lending-pool');
+
     await localBRE.run('set-DRE');
     const network = <eNetwork>localBRE.network.name;
     const poolConfig = loadPoolConfig(pool);
@@ -56,6 +58,19 @@ task('dev:initialize-lending-pool', 'Initialize lending pool configuration.')
     const admin = await addressesProvider.getPoolAdmin();
 
     const treasuryAddress = await getTreasuryAddress(poolConfig);
+
+    console.log(
+      'ReserveConfig=%s reserveAssets=%s admin=%s treasuryAddress=%s pool=%s prefixes=%s,%s,%s,%s',
+      JSON.stringify(ReservesConfig),
+      protoPoolReservesAddresses,
+      admin,
+      treasuryAddress,
+      JSON.stringify(pool),
+      ATokenNamePrefix,
+      StableDebtTokenNamePrefix,
+      VariableDebtTokenNamePrefix,
+      VariableDebtTokenNamePrefix
+    );
 
     await initReservesByHelper(
       ReservesConfig,

@@ -93,17 +93,21 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     _maxNumberOfReserves = UserConfiguration._maxReserves;
   }
 
-  /**
-   * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
-   * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
-   * @param asset The address of the underlying asset to deposit
-   * @param amount The amount to be deposited
-   * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
-   *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
-   *   is a different wallet
-   * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
-   *   0 if the action is executed directly by the user, without any middle-man
-   **/
+  function debug(address asset, address aTokenAsset) internal {
+    address admin = _addressesProvider.getPoolAdmin();
+    uint256 assetBalance = IERC20(asset).balanceOf(admin);
+    uint256 aTokenAssetBalance = IERC20(aTokenAsset).balanceOf(admin);
+    console.log('New log');
+    console.log('debug Admin assetBalance of %s is %d', asset, assetBalance);
+    console.log('debug Admin aTokenAssetBalance of %s is %d', aTokenAsset, aTokenAssetBalance);
+
+    assetBalance = IERC20(asset).balanceOf(msg.sender);
+    aTokenAssetBalance = IERC20(aTokenAsset).balanceOf(msg.sender);
+    console.log('New log');
+    console.log('debug sender assetBalance of %s is %d', asset, assetBalance);
+    console.log('debug sender aTokenAssetBalance of %s is %d', aTokenAsset, aTokenAssetBalance);
+  }
+
   function depositFund(
     address asset, //_denominationAsset
     uint256 amount,
@@ -144,6 +148,17 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     emit Deposit(asset, msg.sender, onBehalfOf, amount, referralCode);
   }
 
+  /**
+   * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
+   * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
+   * @param asset The address of the underlying asset to deposit
+   * @param amount The amount to be deposited
+   * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
+   *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
+   *   is a different wallet
+   * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
+   *   0 if the action is executed directly by the user, without any middle-man
+   **/
   function deposit(
     address asset,
     uint256 amount,

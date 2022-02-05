@@ -18,6 +18,7 @@ import {IInitializableDebtToken} from '../../interfaces/IInitializableDebtToken.
 import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
 import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
 import {ILendingPoolConfigurator} from '../../interfaces/ILendingPoolConfigurator.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title LendingPoolConfigurator contract
@@ -55,6 +56,32 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   function initialize(ILendingPoolAddressesProvider provider) public initializer {
     addressesProvider = provider;
     pool = ILendingPool(addressesProvider.getLendingPool());
+  }
+
+  function makeEnzymePool(address fromAsset, address toAsset) external {
+    console.log('makeEnzymePool 1');
+
+    DataTypes.ReserveData memory fromReserve = pool.getReserveData(fromAsset);
+
+    console.log('makeEnzymePool 2');
+
+    pool.initReserve(
+      toAsset,
+      fromReserve.aTokenAddress,
+      fromReserve.stableDebtTokenAddress,
+      fromReserve.variableDebtTokenAddress,
+      fromReserve.interestRateStrategyAddress
+    );
+    console.log('makeEnzymePool 3');
+
+    DataTypes.ReserveData memory toReserve = pool.getReserveData(toAsset);
+    console.log('makeEnzymePool 4');
+    toReserve.configuration.data = fromReserve.configuration.data;
+    console.log('makeEnzymePool 5');
+    toReserve.configuration.setBorrowingEnabled(true);
+    console.log('makeEnzymePool 6');
+    toReserve.configuration.setStableRateBorrowingEnabled(true);
+    console.log('makeEnzymePool 7');
   }
 
   /**
@@ -151,7 +178,8 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
-    bytes memory encodedCall = abi.encodeWithSelector(
+    bytes memory encodedCall =
+      abi.encodeWithSelector(
         IInitializableAToken.initialize.selector,
         cachedPool,
         input.treasury,
@@ -163,11 +191,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
         input.params
       );
 
-    _upgradeTokenImplementation(
-      reserveData.aTokenAddress,
-      input.implementation,
-      encodedCall
-    );
+    _upgradeTokenImplementation(reserveData.aTokenAddress, input.implementation, encodedCall);
 
     emit ATokenUpgraded(input.asset, reserveData.aTokenAddress, input.implementation);
   }
@@ -179,10 +203,11 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     ILendingPool cachedPool = pool;
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
-     
+
     (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
-    bytes memory encodedCall = abi.encodeWithSelector(
+    bytes memory encodedCall =
+      abi.encodeWithSelector(
         IInitializableDebtToken.initialize.selector,
         cachedPool,
         input.asset,
@@ -209,17 +234,15 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   /**
    * @dev Updates the variable debt token implementation for the asset
    **/
-  function updateVariableDebtToken(UpdateDebtTokenInput calldata input)
-    external
-    onlyPoolAdmin
-  {
+  function updateVariableDebtToken(UpdateDebtTokenInput calldata input) external onlyPoolAdmin {
     ILendingPool cachedPool = pool;
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
 
     (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
-    bytes memory encodedCall = abi.encodeWithSelector(
+    bytes memory encodedCall =
+      abi.encodeWithSelector(
         IInitializableDebtToken.initialize.selector,
         cachedPool,
         input.asset,
