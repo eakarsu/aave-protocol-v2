@@ -5,6 +5,7 @@ import {
   deployLendingPool,
   deployLendingPoolConfigurator,
   deployStableAndVariableTokensHelper,
+  deployEnzymeLendingPool,
 } from '../../helpers/contracts-deployments';
 import { eContractid } from '../../helpers/types';
 import { waitForTx } from '../../helpers/misc-utils';
@@ -20,6 +21,7 @@ task('dev:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
   .addFlag('verify', 'Verify contracts at Etherscan')
   .addParam('pool', `Pool name to retrieve configuration, supported: ${Object.values(ConfigNames)}`)
   .setAction(async ({ verify, pool }, localBRE) => {
+    console.log('dev:deploy-lending-pool');
     await localBRE.run('set-DRE');
     const addressesProvider = await getLendingPoolAddressesProvider();
     const poolConfig = loadPoolConfig(pool);
@@ -40,6 +42,8 @@ task('dev:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
     await waitForTx(
       await addressesProvider.setLendingPoolConfiguratorImpl(lendingPoolConfiguratorImpl.address)
     );
+
+    const enzymeLendingPoolImpl = deployEnzymeLendingPool(verify);
 
     const lendingPoolConfiguratorProxy = await getLendingPoolConfiguratorProxy(
       await addressesProvider.getLendingPoolConfigurator()

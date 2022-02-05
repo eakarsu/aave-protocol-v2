@@ -243,3 +243,18 @@ npx hardhat --network localhost  console
 Inside console, run
 run('set-DRE');
 await run('aave:dev')
+
+ Here is deal,
+
+Aave deposit tokens into atoken address per token and borrow from there. When depositing, it gives a token, that is strange thing it does! When user deposits dai and aave transfers into aDai address for the token.
+So, we define enzyme pool per token where aToken is enzyme vault address. When aave deposit happens, it transfer token into vault, that is what want. When borrow happens, it pulls token from atoken address and give it user.
+
+Borrow:
+The above principle works for CMP (common token fund created per token). this is one to one matching for all tokens. But for user specific token, we have  little modifacation to aave system. Let's keep a mapping structure for user's enzyme vault. We create user vault when user borrows something. We check if user vault was created before (an entry exists in  enzyme vault mapping for the user). If it doesn't exist, we create fund and move token to fund.Otheriwse, we get user vault from mapping, thne move token to the fund. We move deposit token from CMP into user specific fund. But we lost user identity when user deposit token(look below). But aave give us all tokens user deposited tokens (  function getUserAccountData method of LendingPool contract). Remember aToken value is same as deposited token.
+We can get all value of deposited tokens from getUserAccountData method, totalCollateralInETH. We move this aToken from CMP to user specific fund. What we need to to is that we move token CMP address to new user specific address.
+
+
+Deposit:
+Check if user vault exists. If it does, then move deposit token to exisiting fund. 
+   IERC20(asset).transferFrom(msg.sender, aToken, amount);
+Otherwise, we move token to CMP for token (it is found in atokenAddress of fund). (fund's atoken address is same as itself, vault address). In this way, we collect all deposits from users into same fund.If user just deposits but not borrow any, then its deposit will stay in CMP fund

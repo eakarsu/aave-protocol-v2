@@ -63,7 +63,7 @@ const getCommonNetworkConfig = (networkName: eNetwork, networkId: number) => ({
   gasMultiplier: DEFAULT_GAS_MUL,
   gasPrice: NETWORKS_DEFAULT_GAS[networkName],
   chainId: networkId,
-  accounts: ["0x2c283ea64fe7352dd1b1125723a260524e9ad0a6c0a8008b240f904265c0cfd2"],
+  accounts: ["fe213458a92f3f0764ab7cd006682c8dc6c8f7563b70a625417e5be7c0e2133e"],
   /*
   accounts: {
     mnemonic: MNEMONIC,
@@ -146,12 +146,12 @@ const buidlerConfig: HardhatUserConfig = {
         '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
         '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
       ],
-      
+      gas: 9000000000000000,
       chainId: 1,
       //chainId: 31337,
       loggingEnabled: true,
       timeout: 10000000,
-      url: 'http://localhost:8545',
+      url: 'http://localhost:8545'
     },
    localhost_rinkeby: {
       url: 'http://localhost:8545',

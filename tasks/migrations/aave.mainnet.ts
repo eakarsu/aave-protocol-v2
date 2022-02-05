@@ -16,7 +16,7 @@ task('aave:mainnet', 'Deploy development enviroment')
       checkVerification();
     }
 
-    console.log('Migration started\n');
+    console.log('Migration started:MAAAAAAAAAA\n');
 
     console.log('1. Deploy address provider');
     await DRE.run('full:deploy-address-provider', { pool: POOL_NAME, skipRegistry });
