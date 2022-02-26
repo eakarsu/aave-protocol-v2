@@ -18,15 +18,20 @@ contract EnzymeLendingPoolManager is LendingPoolStorage {
     reserve.currentVariableBorrowRate = _reserves[fromAsset].currentVariableBorrowRate;
     reserve.currentStableBorrowRate = _reserves[fromAsset].currentStableBorrowRate;
     reserve.lastUpdateTimestamp = _reserves[fromAsset].lastUpdateTimestamp;
-    reserve.aTokenAddress = _reserves[fromAsset].aTokenAddress;
+    //new pool from existing token pool has aToken address that is vault address as well
+    reserve.aTokenAddress = toAsset;
     reserve.stableDebtTokenAddress = _reserves[fromAsset].stableDebtTokenAddress;
     reserve.variableDebtTokenAddress = _reserves[fromAsset].variableDebtTokenAddress;
     reserve.interestRateStrategyAddress = _reserves[fromAsset].interestRateStrategyAddress;
     reserve.configuration.data = _reserves[fromAsset].configuration.data;
+    console.log('makeEnzymePool:Set addresses');
     reserve.configuration.setBorrowingEnabled(true);
     reserve.configuration.setStableRateBorrowingEnabled(true);
+    console.log('makeEnzymePool:set calls');
     _reserves[toAsset] = reserve;
+    console.log('makeEnzymePool:Set reserve');
     _addReserveToList(toAsset);
+    console.log('makeEnzymePool:Set _addReserveToList');
   }
 
   function _addReserveToList(address asset) internal {

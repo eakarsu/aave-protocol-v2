@@ -8,6 +8,7 @@ import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
 import {InitializableImmutableAdminUpgradeabilityProxy} from '../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -194,17 +195,24 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   function _updateImpl(bytes32 id, address newAddress) internal {
     address payable proxyAddress = payable(_addresses[id]);
 
+    console.log('_updateImpl:before InitializableImmutableAdminUpgradeabilityProxy');
     InitializableImmutableAdminUpgradeabilityProxy proxy =
       InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
     bytes memory params = abi.encodeWithSignature('initialize(address)', address(this));
+    console.log('_updateImpl making params');
+    console.logBytes(params);
 
     if (proxyAddress == address(0)) {
+      console.log('_updateImpl proxy 0');
       proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));
       proxy.initialize(newAddress, params);
       _addresses[id] = address(proxy);
       emit ProxyCreated(id, address(proxy));
+      console.log('_updateImpl proxy 0 done');
     } else {
+      console.log('_updateImpl proxy <> 0:%s', newAddress);
       proxy.upgradeToAndCall(newAddress, params);
+      console.log('_updateImpl proxy <> 0 done');
     }
   }
 

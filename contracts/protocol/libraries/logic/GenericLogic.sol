@@ -11,6 +11,7 @@ import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title GenericLogic library
@@ -182,34 +183,45 @@ library GenericLogic {
         .configuration
         .getParams();
 
+      console.log('liquidationThreshold: %d', vars.liquidationThreshold);
+
       vars.tokenUnit = 10**vars.decimals;
       vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+      console.log('reserveUnitPrice: %d', vars.reserveUnitPrice);
 
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
+        console.log('compoundedLiquidityBalance: %d', vars.compoundedLiquidityBalance);
 
         uint256 liquidityBalanceETH =
           vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
+        console.log('liquidityBalanceETH: %d', liquidityBalanceETH);
 
         vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+        console.log('totalCollateralInETH: %d', vars.totalCollateralInETH);
 
         vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
         vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
           liquidityBalanceETH.mul(vars.liquidationThreshold)
         );
+        console.log('avgLiquidationThreshold: %d', vars.avgLiquidationThreshold);
       }
 
       if (userConfig.isBorrowing(vars.i)) {
         vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
           user
         );
+        console.log('compoundedBorrowBalance: %d', vars.compoundedBorrowBalance);
+
         vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
           IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user)
         );
+        console.log('compoundedBorrowBalance: %d', vars.compoundedBorrowBalance);
 
         vars.totalDebtInETH = vars.totalDebtInETH.add(
           vars.reserveUnitPrice.mul(vars.compoundedBorrowBalance).div(vars.tokenUnit)
         );
+        console.log('totalDebtInETH: %d', vars.totalDebtInETH);
       }
     }
 
@@ -217,12 +229,15 @@ library GenericLogic {
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
+    console.log('avgLiquidationThreshold: %d', vars.avgLiquidationThreshold);
 
     vars.healthFactor = calculateHealthFactorFromBalances(
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
       vars.avgLiquidationThreshold
     );
+    console.log('healthFactor: %d', vars.healthFactor);
+
     return (
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
@@ -271,5 +286,32 @@ library GenericLogic {
 
     availableBorrowsETH = availableBorrowsETH.sub(totalDebtInETH);
     return availableBorrowsETH;
+  }
+
+  function makeEnzymePool(
+    address fromAsset,
+    address toAsset,
+    mapping(address => DataTypes.ReserveData) storage _reserves
+  ) internal {
+    DataTypes.ReserveData memory reserve;
+    reserve.liquidityIndex = _reserves[fromAsset].liquidityIndex;
+    reserve.variableBorrowIndex = _reserves[fromAsset].variableBorrowIndex;
+    reserve.currentLiquidityRate = _reserves[fromAsset].currentLiquidityRate;
+    reserve.currentVariableBorrowRate = _reserves[fromAsset].currentVariableBorrowRate;
+    reserve.currentStableBorrowRate = _reserves[fromAsset].currentStableBorrowRate;
+    reserve.lastUpdateTimestamp = _reserves[fromAsset].lastUpdateTimestamp;
+    //new pool from existing token pool has aToken address that is vault address as well
+    reserve.aTokenAddress = toAsset;
+    reserve.stableDebtTokenAddress = _reserves[fromAsset].stableDebtTokenAddress;
+    reserve.variableDebtTokenAddress = _reserves[fromAsset].variableDebtTokenAddress;
+    reserve.interestRateStrategyAddress = _reserves[fromAsset].interestRateStrategyAddress;
+    reserve.configuration.data = _reserves[fromAsset].configuration.data;
+    console.log('makeEnzymePool:Set addresses');
+    reserve.configuration.setBorrowingEnabled(true);
+    reserve.configuration.setStableRateBorrowingEnabled(true);
+    console.log('makeEnzymePool:set calls');
+    _reserves[toAsset] = reserve;
+    console.log('makeEnzymePool:Set reserve');
+    console.log('makeEnzymePool:Set _addReserveToList');
   }
 }
