@@ -177,6 +177,7 @@ library ValidationLogic {
       vars.currentLtv
     ); //LTV is calculated in percentage
 
+    //We have 100 tokens deposited. We can borrow 100 borrow.
     require(
       vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
       Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW

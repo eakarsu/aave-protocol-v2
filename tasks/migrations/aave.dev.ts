@@ -15,7 +15,7 @@ task('aave:dev', 'Deploy development enviroment')
       checkVerification();
     }
 
-    console.log('Migration started:devgsdfgsdfgsdf\n');
+    console.log('Migration started\n');
 
     console.log('1. Deploy mock tokens');
     ///run this seperately. enzyme finance depends on aave tokens but aave depends on enzyme as well

@@ -57,6 +57,7 @@ import {
   UiIncentiveDataProviderV2Factory,
   EnzymeLendingPoolManager,
   EnzymeLendingPoolManagerFactory,
+  EnzymeBridgeFactory,
 } from '../types';
 import {
   withSaveAndVerify,
@@ -259,9 +260,18 @@ export const deployEnzymeLendingPool = async (verify?: boolean) => {
   return withSaveAndVerify(enzymeLendingPoolImpl, eContractid.EnzymeLendingPoolManager, [], verify);
 };
 
+export const deployEnzymeBridge = async (verify?: boolean) => {
+  const enzymeBridgeImpl = await new EnzymeBridgeFactory(await getFirstSigner()).deploy();
+  await insertContractAddressInDb(eContractid.EnzymeBridge, enzymeBridgeImpl.address);
+  return withSaveAndVerify(enzymeBridgeImpl, eContractid.EnzymeBridge, [], verify);
+};
+
 export const deployLendingPool = async (verify?: boolean) => {
   const libraries = await deployAaveLibraries(verify);
+  console.log('Deployed libs');
+  console.log('Deploying Lending pool now');
   const lendingPoolImpl = await new LendingPoolFactory(libraries, await getFirstSigner()).deploy();
+  console.log('Deployed Lending pool now');
   await insertContractAddressInDb(eContractid.LendingPoolImpl, lendingPoolImpl.address);
   return withSaveAndVerify(lendingPoolImpl, eContractid.LendingPool, [], verify);
 };

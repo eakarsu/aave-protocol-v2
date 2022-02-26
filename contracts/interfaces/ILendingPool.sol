@@ -407,4 +407,18 @@ interface ILendingPool {
   function setPause(bool val) external;
 
   function paused() external view returns (bool);
+
+  function getUserConfig(address user, uint256 reserveOrder) external returns (bool, bool);
+
+  function isUserEmptyConfig(address user) external returns (bool);
+
+  function getReserveDataForUser(address asset, uint256 reserveOrder)
+    external
+    returns (
+      address,
+      uint256,
+      uint256
+    );
+
+  function makeEnzymePool(address fromAsset, address toAsset) external;
 }

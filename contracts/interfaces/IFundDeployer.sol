@@ -34,4 +34,8 @@ interface IFundDeployer {
     bytes calldata _feeManagerConfigData,
     bytes calldata _policyManagerConfigData
   ) external returns (address comptrollerProxy_, address vaultProxy_);
+
+  function getVaultLib() external view returns (address);
+
+  function getComptrollerLib() external view returns (address comptrollerLib_);
 }
