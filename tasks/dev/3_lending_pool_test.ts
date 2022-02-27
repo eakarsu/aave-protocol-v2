@@ -32,14 +32,10 @@ task('dev:test:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
     const lendingPoolImpl = await deployLendingPool(verify);
     console.log('after deployLendingPool');
 
-    // Set lending pool impl to Address Provider
-    await waitForTx(await addressesProvider.setLendingPoolImpl(lendingPoolImpl.address));
-    console.log('setLendingPoolImpl');
-
     const enzymeBridgeImpl = await deployEnzymeBridge(verify);
     console.log('deployEnzymeBridge');
 
-    const id2 = utils.keccak256(utils.toUtf8Bytes('EnzymeBridgeId'));
-    await waitForTx(await addressesProvider.setAddress(id2, enzymeBridgeImpl.address));
+    const id = ethers.utils.formatBytes32String('EnzymeBridgeId');
+    await waitForTx(await addressesProvider.setAddress(id, enzymeBridgeImpl.address));
     console.log('Enzyme Bridge redeployed');
   });

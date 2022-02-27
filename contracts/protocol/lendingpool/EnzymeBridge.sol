@@ -22,11 +22,10 @@ contract EnzymeBridge is IEnzymeBridge {
   address _entranceFeeAddress = address(0);
   address _perfFeeAddress = address(0);
   address _commonFundOwner = address(0);
-  address _enzymePoolManagerAddress = address(0);
   address _lendingPool = address(0);
+  address _fundDeployer = address(0);
 
   ILendingPoolAddressesProvider internal _addressesProvider;
-  address _fundDeployer = address(0);
   mapping(address => address) internal _vaults;
   mapping(address => address) internal _comptrollers;
   mapping(address => address) internal _commonVaults;
@@ -39,25 +38,23 @@ contract EnzymeBridge is IEnzymeBridge {
     _addressesProvider = provider;
     bytes32 contractId = 'ManagementFeeId';
     _manFeeAddress = _addressesProvider.getAddress(contractId);
-    console.log('Bridge Address: %s', _manFeeAddress);
+    console.log('_manFeeAddress:%s', _manFeeAddress);
 
     contractId = 'EntranceRateDirectFeeId';
     _entranceFeeAddress = _addressesProvider.getAddress(contractId);
-    console.log('Bridge Address: %s', _entranceFeeAddress);
+    console.log('_entranceFeeAddress:%s', _entranceFeeAddress);
 
     contractId = 'PerformanceFeeId';
     _perfFeeAddress = _addressesProvider.getAddress(contractId);
-    console.log('Bridge Address: %s', _perfFeeAddress);
+    console.log('_perfFeeAddress:%s', _perfFeeAddress);
 
     contractId = 'FundDeployerId';
     _fundDeployer = _addressesProvider.getAddress(contractId);
-    console.log('Bridge Address: %s', _fundDeployer);
-    console.logBytes32(contractId);
+    console.log('_fundDeployer:%s', _fundDeployer);
 
-    bytes32 contractId2 = 'EnzymeBridgeId';
-    address enzymeBridgeAddress = _addressesProvider.getAddress(contractId2);
-    console.log('Bridge Address: %s', enzymeBridgeAddress);
-    console.logBytes32(contractId2);
+    contractId = 'EnzymeBridgeId';
+    address enzymeBridgeAddress = _addressesProvider.getAddress(contractId);
+    console.log('enzymeBridgeAddress:%s', enzymeBridgeAddress);
 
     _commonFundOwner = commonFundOwner;
     _lendingPool = provider.getLendingPool();
@@ -194,8 +191,6 @@ contract EnzymeBridge is IEnzymeBridge {
         feesData,
         policyData
       );
-    //_comptrollers[_fundOwner] = comptrollerProxy;
-    //_vaults[_fundOwner] = vaultProxy;
     return (comptrollerProxy, vaultProxy);
   }
 
@@ -229,9 +224,9 @@ contract EnzymeBridge is IEnzymeBridge {
   }
 
   function getFeesManagerConfigArgsData() internal returns (bytes memory) {
-    bytes memory manFeeData = encodeManFee(manFee, zeroAddress);
-    bytes memory entranceFeeData = encodeManFee(entranceFee, zeroAddress);
-    bytes memory perfFeeData = encodePerfFee(perfFee, defaultPerfFeePeriod, zeroAddress);
+    bytes memory manFeeData = encodeManFee(manFee, _manFeeAddress);
+    bytes memory entranceFeeData = encodeManFee(entranceFee, _entranceFeeAddress);
+    bytes memory perfFeeData = encodePerfFee(perfFee, defaultPerfFeePeriod, _perfFeeAddress);
 
     address[3] memory feesAddresses = [_manFeeAddress, _entranceFeeAddress, _perfFeeAddress];
     bytes[3] memory feesDatas = [manFeeData, entranceFeeData, perfFeeData];
