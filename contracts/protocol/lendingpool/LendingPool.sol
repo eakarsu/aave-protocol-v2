@@ -133,6 +133,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     (address vault, address comptroller) =
       IEnzymeBridge(enzymeBridgeAddress).deposit(onBehalfOf, asset, amount);
     console.log('deposit,enzymeBridgeAddress completed:%s', enzymeBridgeAddress);
+    console.log('deposit vault Proxy:%s', vault);
+
     //fetch vault reserve instead of asset
     DataTypes.ReserveData storage reserve = _reserves[vault];
     console.log('deposit_reserves');
@@ -143,16 +145,24 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     //vault aToken is set to its vault address. So we transfer token to vault
     address aToken = reserve.aTokenAddress;
+    address vaultAddress = reserve.vaultAddress;
+    console.log('deposit aToken:%s', aToken);
+    console.log('deposit vaultAddress:%s', vaultAddress);
 
     reserve.updateState();
     reserve.updateInterestRates(asset, aToken, amount, 0);
+    console.log('deposit updateInterestRates');
 
-    IERC20(asset).transferFrom(msg.sender, aToken, amount);
+    IERC20(asset).transferFrom(msg.sender, vaultAddress, amount);
+    console.log('deposit transferFrom');
 
     bool isFirstDeposit = IAToken(aToken).mint(onBehalfOf, amount, reserve.liquidityIndex);
+    console.log('deposit IAToken');
 
     if (isFirstDeposit) {
+      console.log('deposit before setUsingAsCollateral');
       _usersConfig[onBehalfOf].setUsingAsCollateral(reserve.id, true);
+      console.log('deposit after setUsingAsCollateral');
       emit ReserveUsedAsCollateralEnabled(asset, onBehalfOf);
     }
 

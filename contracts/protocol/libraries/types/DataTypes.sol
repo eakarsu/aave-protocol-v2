@@ -25,6 +25,7 @@ library DataTypes {
     address interestRateStrategyAddress;
     //the id of the reserve. Represents the position in the list of the active reserves
     uint8 id;
+    address vaultAddress;
   }
 
   struct EnzymeFundData {

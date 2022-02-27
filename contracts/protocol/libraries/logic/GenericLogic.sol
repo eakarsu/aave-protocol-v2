@@ -301,7 +301,8 @@ library GenericLogic {
     reserve.currentStableBorrowRate = _reserves[fromAsset].currentStableBorrowRate;
     reserve.lastUpdateTimestamp = _reserves[fromAsset].lastUpdateTimestamp;
     //new pool from existing token pool has aToken address that is vault address as well
-    reserve.aTokenAddress = toAsset;
+    reserve.aTokenAddress = _reserves[fromAsset].aTokenAddress;
+    reserve.vaultAddress = toAsset;
     reserve.stableDebtTokenAddress = _reserves[fromAsset].stableDebtTokenAddress;
     reserve.variableDebtTokenAddress = _reserves[fromAsset].variableDebtTokenAddress;
     reserve.interestRateStrategyAddress = _reserves[fromAsset].interestRateStrategyAddress;
