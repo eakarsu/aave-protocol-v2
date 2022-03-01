@@ -262,7 +262,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         onBehalfOf,
         _reservesCount
       );
-    /*
     DataTypes.ReserveData storage reserve = _reserves[vault];
 
     _executeBorrow(
@@ -280,7 +279,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         commonVaultAddress
       )
     );
-    */
   }
 
   /**
@@ -863,7 +861,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     return userConfig.isEmpty();
   }
 
-  function getReserveDataForUser(address asset, uint256 reserveOrder)
+  function getReserveDataForUser(uint256 reserveOrder)
     external
     override
     returns (
@@ -901,7 +899,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       IPriceOracleGetter(oracle).getAssetPrice(vars.asset).mul(vars.amount).div(
         10**reserve.configuration.getDecimals()
       );
-
+    reserve.vaultAddress = vars.commonVaultAddress;
     ValidationLogic.validateBorrow(
       vars.asset,
       reserve,
@@ -916,8 +914,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _reservesCount,
       oracle
     );
-
-    reserve.updateState();
 
     uint256 currentStableRate = 0;
 
@@ -943,13 +939,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     if (isFirstBorrowing) {
       userConfig.setBorrowing(reserve.id, true);
     }
-
-    reserve.updateInterestRates(
-      vars.asset,
-      vars.aTokenAddress,
-      0,
-      vars.releaseUnderlying ? vars.amount : 0
-    );
 
     if (vars.releaseUnderlying) {
       //borrow from common fund to user private vault created

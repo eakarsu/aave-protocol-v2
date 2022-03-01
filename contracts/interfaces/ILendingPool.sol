@@ -412,7 +412,7 @@ interface ILendingPool {
 
   function isUserEmptyConfig(address user) external returns (bool);
 
-  function getReserveDataForUser(address asset, uint256 reserveOrder)
+  function getReserveDataForUser(uint256 reserveOrder)
     external
     returns (
       address,
