@@ -176,17 +176,26 @@ contract EnzymeBridge is IEnzymeBridge {
         console.log('isUsingAsCollateralOrBorrowing wrong');
         continue;
       }
+      console.log('moveUserTokensInCommonFundToPrivate Inspecting:%d', i);
       //aToken address not changed. We have added vault address for reserve. Refer to makeEnzymePool.
       (
         address aTokenAddress,
         address vaultAddress,
         uint256 liquidationThreshold,
         uint256 decimals
-      ) = ILendingPool(_lendingPool).getReserveDataForUser(user, i);
+      ) = ILendingPool(_lendingPool).getReserveDataForUser(i);
       address underlyingAssetAddress = IAToken(aTokenAddress).UNDERLYING_ASSET_ADDRESS();
       //debug
       console.log('liquidationThreshold: %d', liquidationThreshold);
       console.logBool(isColl);
+      console.log(
+        'moveUserTokensInCommonFundToPrivate:getReserveDataForUser:atoken:%s',
+        aTokenAddress
+      );
+      console.log(
+        'moveUserTokensInCommonFundToPrivate:getReserveDataForUser:vault:%s',
+        vaultAddress
+      );
       //debug
       if (liquidationThreshold != 0 && isColl) {
         uint256 compoundedLiquidityBalance = IERC20(aTokenAddress).balanceOf(user);

@@ -15,6 +15,7 @@ import {Errors} from '../helpers/Errors.sol';
 import {Helpers} from '../helpers/Helpers.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title ReserveLogic library
@@ -172,10 +173,19 @@ library ValidationLogic {
       Errors.VL_HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD
     );
 
+    console.log(
+      'validateBorrow : amountOfCollateralNeededETH:%d',
+      vars.amountOfCollateralNeededETH
+    );
     //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
     vars.amountOfCollateralNeededETH = vars.userBorrowBalanceETH.add(amountInETH).percentDiv(
       vars.currentLtv
     ); //LTV is calculated in percentage
+    console.log(
+      'validateBorrow : after amountOfCollateralNeededETH:%d',
+      vars.amountOfCollateralNeededETH
+    );
+    console.log('validateBorrow : userCollateralBalanceETH:%d', vars.userCollateralBalanceETH);
 
     //We have 100 tokens deposited. We can borrow 100 borrow.
     require(
@@ -202,12 +212,15 @@ library ValidationLogic {
           amount > IERC20(reserve.aTokenAddress).balanceOf(userAddress),
         Errors.VL_COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
-
-      vars.availableLiquidity = IERC20(asset).balanceOf(reserve.aTokenAddress);
+      console.log('validateBorrow:reserve.vaultAddress:%s', reserve.vaultAddress);
+      console.log('validateBorrow:asset:%s', asset);
+      vars.availableLiquidity = IERC20(asset).balanceOf(reserve.vaultAddress);
+      console.log('validateBorrow:availableLiquidity:%d', vars.availableLiquidity);
 
       //calculate the max available loan size in stable rate mode as a percentage of the
       //available liquidity
       uint256 maxLoanSizeStable = vars.availableLiquidity.percentMul(maxStableLoanPercent);
+      console.log('validateBorrow:maxLoanSizeStable:%d', maxLoanSizeStable);
 
       require(amount <= maxLoanSizeStable, Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE);
     }

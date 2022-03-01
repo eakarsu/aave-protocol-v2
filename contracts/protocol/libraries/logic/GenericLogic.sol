@@ -11,7 +11,9 @@ import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import {IAToken} from '../../../interfaces/IAToken.sol';
 import 'hardhat/console.sol';
+import {Errors} from '../../libraries/helpers/Errors.sol';
 
 /**
  * @title GenericLogic library
@@ -178,6 +180,8 @@ library GenericLogic {
 
       vars.currentReserveAddress = reserves[vars.i];
       DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
+      console.log('calculateUserAccountData: atoken:%d', currentReserve.aTokenAddress);
+      vars.currentReserveAddress = IAToken(currentReserve.aTokenAddress).UNDERLYING_ASSET_ADDRESS();
 
       (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
         .configuration
