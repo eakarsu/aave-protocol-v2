@@ -29,6 +29,7 @@ import {LendingPoolStorage} from './LendingPoolStorage.sol';
 
 import {IFundDeployer} from '../../interfaces/IFundDeployer.sol';
 import {IEnzymeBridge} from '../../interfaces/IEnzymeBridge.sol';
+import {IVault} from '../../interfaces/IVault.sol';
 
 /**
  * @title LendingPool contract
@@ -246,10 +247,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint16 referralCode,
     address onBehalfOf
   ) external override whenNotPaused {
-    DataTypes.ReserveData storage reserve = _reserves[asset];
-
     bytes32 contractId = 'EnzymeBridgeId';
     address enzymeBridgeAddress = _addressesProvider.getAddress(contractId);
+    console.log('Borrow obtained bridge:%s', enzymeBridgeAddress);
+
+    address commonVaultAddress = IEnzymeBridge(enzymeBridgeAddress).getCommonVault(asset);
+    console.log('Borrow obtained common vault:%s', commonVaultAddress);
+
     (address vault, address comptroller) =
       IEnzymeBridge(enzymeBridgeAddress).borrow(
         asset,
@@ -258,6 +262,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         onBehalfOf,
         _reservesCount
       );
+    /*
+    DataTypes.ReserveData storage reserve = _reserves[vault];
 
     _executeBorrow(
       ExecuteBorrowParams(
@@ -269,10 +275,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         reserve.aTokenAddress,
         referralCode,
         true,
-        vault,
-        comptroller
+        reserve.vaultAddress,
+        comptroller,
+        commonVaultAddress
       )
     );
+    */
   }
 
   /**
@@ -833,8 +841,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address aTokenAddress;
     uint16 referralCode;
     bool releaseUnderlying;
-    address vault;
+    address vaultAddress;
     address comptroller;
+    address commonVaultAddress;
   }
 
   function getUserConfig(address user, uint256 reserveOrder)
@@ -859,15 +868,22 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     override
     returns (
       address,
+      address,
       uint256,
       uint256
     )
   {
     address currentReserveAddress = _reservesList[reserveOrder];
     DataTypes.ReserveData storage currentReserve = _reserves[currentReserveAddress];
+
     (uint256 ltv, uint256 liquidationThreshold, , uint256 decimals, ) =
       currentReserve.configuration.getParams();
-    return (currentReserve.aTokenAddress, liquidationThreshold, decimals);
+    return (
+      currentReserve.aTokenAddress,
+      currentReserve.vaultAddress,
+      liquidationThreshold,
+      decimals
+    );
   }
 
   function makeEnzymePool(address fromAsset, address toAsset) external override {
@@ -876,13 +892,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   function _executeBorrow(ExecuteBorrowParams memory vars) internal {
-    //DataTypes.ReserveData storage reserve = _reserves[vars.asset];
-    DataTypes.ReserveData storage reserve = _reserves[vars.vault];
+    DataTypes.ReserveData storage reserve = _reserves[vars.asset];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[vars.onBehalfOf];
-
-    //test
-    IAToken(reserve.aTokenAddress).transfer(vars.user, vars.amount);
-    //test
 
     address oracle = _addressesProvider.getPriceOracle();
 
@@ -941,7 +952,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     );
 
     if (vars.releaseUnderlying) {
-      IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
+      //borrow from common fund to user private vault created
+      address underlyingAssetAddress = IAToken(vars.aTokenAddress).UNDERLYING_ASSET_ADDRESS();
+      IVault(vars.commonVaultAddress).transferUnderlyingTo(
+        underlyingAssetAddress,
+        vars.vaultAddress,
+        vars.amount
+      );
+      //IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
     }
 
     emit Borrow(

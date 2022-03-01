@@ -88,4 +88,10 @@ interface IVault is IMigratableVault, IFreelyTransferableSharesVault, IExternalP
     address,
     uint256
   ) external;
+
+  function transferUnderlyingTo(
+    address asset,
+    address target,
+    uint256 amount
+  ) external returns (uint256);
 }

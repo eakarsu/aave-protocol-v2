@@ -11,6 +11,7 @@ import { isAddress } from 'ethers/lib/utils';
 import { isZeroAddress } from 'ethereumjs-util';
 import { SignerWithAddress } from '../test-suites/test-aave/helpers/make-suite';
 import { usingTenderly } from './tenderly-utils';
+import fs from 'fs';
 
 const contractGetters = require('./contracts-getters');
 export const toWad = (value: string | number) => new BigNumber(value).times(WAD).toFixed();
@@ -163,6 +164,14 @@ export const printContractsTestEnzyme = async () => {
   console.log(reserveLogic + '\n');
   console.log(genericLogic + '\n');
   console.log(validationLogic + '\n');
+
+  const localFile = '/home/eakarsu/ProsperityFinance/erol-enzyme-aave-fork-protocol/aave.out';
+  const fs = require('fs');
+  fs.appendFileSync(localFile, lendingPool + '\n');
+  fs.appendFileSync(localFile, enzymeBridge + '\n');
+  fs.appendFileSync(localFile, reserveLogic + '\n');
+  fs.appendFileSync(localFile, genericLogic + '\n');
+  fs.appendFileSync(localFile, validationLogic + '\n');
 };
 
 export const notFalsyOrZeroAddress = (address: tEthereumAddress | null | undefined): boolean => {
