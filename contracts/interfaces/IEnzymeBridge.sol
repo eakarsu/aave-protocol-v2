@@ -36,4 +36,8 @@ interface IEnzymeBridge {
     address user,
     uint256 reservesCount
   ) external returns (address, address);
+
+  function getCommonVault(address _asset) external returns (address);
+
+  function getCommonComptroller(address _asset) external returns (address);
 }

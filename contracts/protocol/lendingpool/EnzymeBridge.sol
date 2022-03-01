@@ -6,9 +6,11 @@ import {IFundDeployer} from '../../interfaces/IFundDeployer.sol';
 import {IEnzymeBridge} from '../../interfaces/IEnzymeBridge.sol';
 import {IComptroller} from '../../interfaces/IComptroller.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
+import {IVault} from '../../interfaces/IVault.sol';
 import {IEnzymeLendingPoolManager} from '../../interfaces/IEnzymeLendingPoolManager.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {IAToken} from '../../interfaces/IAToken.sol';
 
 pragma experimental ABIEncoderV2;
 
@@ -68,6 +70,14 @@ contract EnzymeBridge is IEnzymeBridge {
     return _commonVaults[_asset] != address(0);
   }
 
+  function getCommonVault(address _asset) public override returns (address) {
+    return _commonVaults[_asset];
+  }
+
+  function getCommonComptroller(address _asset) public override returns (address) {
+    return _commonComptrollers[_asset];
+  }
+
   function deposit(
     address owner,
     address asset,
@@ -113,18 +123,28 @@ contract EnzymeBridge is IEnzymeBridge {
     address comptrollerProxy = address(0);
     address vaultProxy = address(0);
 
+    console.log('Bridge borrow called');
     bool isExists = isFundExistForUser(user);
     //create private fund for user so that we transfer his collateral from common fund to this private one
     //User may have deposited so many tokens. As result, for each token, its atoken can give user deposit amount
     //we will transfer atoken amount to this fund
     if (!isExists) {
+      console.log("Borrow: User vault doesn't exist");
       (comptrollerProxy, vaultProxy) = createNewFund(asset);
+      console.log('Borrow: get created vault:%s', vaultProxy);
+      console.log('Borrow: get created comptroller:%s', comptrollerProxy);
+
+      ILendingPool(_lendingPool).makeEnzymePool(asset, vaultProxy);
+      console.log('Borrow: make enzyme pool');
+
       _vaults[user] = vaultProxy;
       _comptrollers[user] = comptrollerProxy;
       console.log('Before moving funds from common funds');
       //move user tokens in common pool funds to newly created private one
       moveUserTokensInCommonFundToPrivate(user, reservesCount, vaultProxy);
+      console.log('Borrow: after moving vault valu');
     } else {
+      console.log('User vault does exist');
       vaultProxy = _vaults[user];
       comptrollerProxy = _comptrollers[user];
     }
@@ -132,6 +152,8 @@ contract EnzymeBridge is IEnzymeBridge {
     console.log('Before moving token to private fund');
 
     //debug
+    console.log('Private fund has for asset:%s', asset);
+    console.log('Private fund has vault asset:%s', vaultProxy);
     uint256 compoundedLiquidityBalance = IERC20(asset).balanceOf(vaultProxy);
     console.log('Private fund has %d  ', compoundedLiquidityBalance);
     //debug
@@ -154,10 +176,14 @@ contract EnzymeBridge is IEnzymeBridge {
         console.log('isUsingAsCollateralOrBorrowing wrong');
         continue;
       }
-      //aToken address stores vault for address. Refer to makeEnzymePool. It is common fund vault address
-      (address aTokenAddress, uint256 liquidationThreshold, uint256 decimals) =
-        ILendingPool(_lendingPool).getReserveDataForUser(user, i);
-
+      //aToken address not changed. We have added vault address for reserve. Refer to makeEnzymePool.
+      (
+        address aTokenAddress,
+        address vaultAddress,
+        uint256 liquidationThreshold,
+        uint256 decimals
+      ) = ILendingPool(_lendingPool).getReserveDataForUser(user, i);
+      address underlyingAssetAddress = IAToken(aTokenAddress).UNDERLYING_ASSET_ADDRESS();
       //debug
       console.log('liquidationThreshold: %d', liquidationThreshold);
       console.logBool(isColl);
@@ -165,13 +191,35 @@ contract EnzymeBridge is IEnzymeBridge {
       if (liquidationThreshold != 0 && isColl) {
         uint256 compoundedLiquidityBalance = IERC20(aTokenAddress).balanceOf(user);
         console.log('For token address  %s ', aTokenAddress);
+        console.log('For vault address  %s ', vaultAddress);
         console.log('We have %d balance', compoundedLiquidityBalance);
-        IERC20(aTokenAddress).transfer(privateVaultAddress, compoundedLiquidityBalance);
-        console.log('Token transferred to %s', privateVaultAddress);
-        //debug
-        compoundedLiquidityBalance = IERC20(aTokenAddress).balanceOf(user);
-        console.log('User had %d left ', compoundedLiquidityBalance);
-        //debug
+        if (compoundedLiquidityBalance > 0) {
+          console.log('Token being transferred from %s', vaultAddress);
+          console.log('Token  %s being transferred from ', underlyingAssetAddress);
+
+          //debug
+          compoundedLiquidityBalance = IERC20(underlyingAssetAddress).balanceOf(vaultAddress);
+          console.log('User has before %d  ', compoundedLiquidityBalance);
+          //debug
+
+          //First add it to track asset of vault
+          IVault(privateVaultAddress).addTrackedAsset(underlyingAssetAddress);
+          IVault(vaultAddress).transferUnderlyingTo(
+            underlyingAssetAddress,
+            privateVaultAddress,
+            compoundedLiquidityBalance
+          );
+          console.log('Token transferred to %s', privateVaultAddress);
+
+          //debug
+          compoundedLiquidityBalance = IERC20(underlyingAssetAddress).balanceOf(vaultAddress);
+          console.log('User had %d left ', compoundedLiquidityBalance);
+          compoundedLiquidityBalance = IERC20(underlyingAssetAddress).balanceOf(
+            privateVaultAddress
+          );
+          console.log('New User has now  %d ', compoundedLiquidityBalance);
+          //debug
+        }
       }
     }
   }
