@@ -167,6 +167,7 @@ export const printContractsTestEnzyme = async () => {
 
   const localFile = '/home/eakarsu/ProsperityFinance/erol-enzyme-aave-fork-protocol/aave.out';
   const fs = require('fs');
+  fs.appendFileSync(localFile, '\n');
   fs.appendFileSync(localFile, lendingPool + '\n');
   fs.appendFileSync(localFile, enzymeBridge + '\n');
   fs.appendFileSync(localFile, reserveLogic + '\n');

@@ -94,4 +94,11 @@ interface IVault is IMigratableVault, IFreelyTransferableSharesVault, IExternalP
     address target,
     uint256 amount
   ) external returns (uint256);
+
+  function burn(
+    address user,
+    address receiverOfUnderlying,
+    uint256 amount,
+    address underlyingAssetAddress
+  ) external;
 }

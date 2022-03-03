@@ -40,4 +40,12 @@ interface IEnzymeBridge {
   function getCommonVault(address _asset) external returns (address);
 
   function getCommonComptroller(address _asset) external returns (address);
+
+  function getMyVault(address _user) external returns (address);
+
+  function getMyComptroller(address _user) external returns (address);
+
+  function getUserVault(address _user, address _asset) external returns (address);
+
+  function getUserComptroller(address _user, address _asset) external returns (address);
 }

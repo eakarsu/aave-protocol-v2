@@ -63,7 +63,7 @@ contract EnzymeBridge is IEnzymeBridge {
   }
 
   function isFundExistForUser(address _fundOwner) public override returns (bool) {
-    return _comptrollers[_fundOwner] != address(0);
+    return _vaults[_fundOwner] != address(0);
   }
 
   function isCommonFundExist(address _asset) public override returns (bool) {
@@ -76,6 +76,24 @@ contract EnzymeBridge is IEnzymeBridge {
 
   function getCommonComptroller(address _asset) public override returns (address) {
     return _commonComptrollers[_asset];
+  }
+
+  function getMyVault(address _user) public override returns (address) {
+    return _vaults[_user];
+  }
+
+  function getMyComptroller(address _user) public override returns (address) {
+    return _comptrollers[_user];
+  }
+
+  function getUserVault(address _user, address _asset) public override returns (address) {
+    if (isFundExistForUser(_user)) return _vaults[_user];
+    else return _commonVaults[_asset];
+  }
+
+  function getUserComptroller(address _user, address _asset) public override returns (address) {
+    if (isFundExistForUser(_user)) return _comptrollers[_user];
+    else return _commonComptrollers[_asset];
   }
 
   function deposit(
@@ -103,7 +121,6 @@ contract EnzymeBridge is IEnzymeBridge {
         console.log('bridge deposit isCommonFundExist before createNewFund');
         (address comptrollerProxy, address vaultProxy) = createNewFund(asset);
         console.log('bridge deposit isCommonFundExist after createNewFund');
-        ILendingPool(_lendingPool).makeEnzymePool(asset, vaultProxy);
         _commonComptrollers[asset] = comptrollerProxy;
         _commonVaults[asset] = vaultProxy;
       }
@@ -133,9 +150,6 @@ contract EnzymeBridge is IEnzymeBridge {
       (comptrollerProxy, vaultProxy) = createNewFund(asset);
       console.log('Borrow: get created vault:%s', vaultProxy);
       console.log('Borrow: get created comptroller:%s', comptrollerProxy);
-
-      ILendingPool(_lendingPool).makeEnzymePool(asset, vaultProxy);
-      console.log('Borrow: make enzyme pool');
 
       _vaults[user] = vaultProxy;
       _comptrollers[user] = comptrollerProxy;
@@ -178,13 +192,10 @@ contract EnzymeBridge is IEnzymeBridge {
       }
       console.log('moveUserTokensInCommonFundToPrivate Inspecting:%d', i);
       //aToken address not changed. We have added vault address for reserve. Refer to makeEnzymePool.
-      (
-        address aTokenAddress,
-        address vaultAddress,
-        uint256 liquidationThreshold,
-        uint256 decimals
-      ) = ILendingPool(_lendingPool).getReserveDataForUser(i);
+      (address aTokenAddress, uint256 liquidationThreshold, uint256 decimals) =
+        ILendingPool(_lendingPool).getReserveDataForUser(i);
       address underlyingAssetAddress = IAToken(aTokenAddress).UNDERLYING_ASSET_ADDRESS();
+      address vaultAddress = _commonVaults[underlyingAssetAddress];
       //debug
       console.log('liquidationThreshold: %d', liquidationThreshold);
       console.logBool(isColl);

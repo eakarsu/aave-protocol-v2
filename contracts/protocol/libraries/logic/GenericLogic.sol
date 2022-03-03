@@ -14,6 +14,7 @@ import {DataTypes} from '../types/DataTypes.sol';
 import {IAToken} from '../../../interfaces/IAToken.sol';
 import 'hardhat/console.sol';
 import {Errors} from '../../libraries/helpers/Errors.sol';
+import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
 
 /**
  * @title GenericLogic library
@@ -65,6 +66,7 @@ library GenericLogic {
     uint256 reservesCount,
     address oracle
   ) external view returns (bool) {
+    console.log('balanceDecreaseAllowed begin ');
     if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id)) {
       return true;
     }
@@ -76,6 +78,7 @@ library GenericLogic {
       .getParams();
 
     if (vars.liquidationThreshold == 0) {
+      console.log('balanceDecreaseAllowed:liquidationThreshold:%d', vars.liquidationThreshold);
       return true;
     }
 
@@ -86,6 +89,7 @@ library GenericLogic {
       vars.avgLiquidationThreshold,
 
     ) = calculateUserAccountData(user, reservesData, userConfig, reserves, reservesCount, oracle);
+    console.log('balanceDecreaseAllowed after  calculateUserAccountData');
 
     if (vars.totalDebtInETH == 0) {
       return true;
@@ -94,8 +98,10 @@ library GenericLogic {
     vars.amountToDecreaseInETH = IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(
       10**vars.decimals
     );
+    console.log('balanceDecreaseAllowed amountToDecreaseInETH:%d', vars.amountToDecreaseInETH);
 
     vars.collateralBalanceAfterDecrease = vars.totalCollateralInETH.sub(vars.amountToDecreaseInETH);
+    console.log('balanceDecreaseAllowed amountToDecreaseInETH:%d', vars.amountToDecreaseInETH);
 
     //if there is a borrow, there can't be 0 collateral
     if (vars.collateralBalanceAfterDecrease == 0) {
@@ -107,6 +113,10 @@ library GenericLogic {
       .mul(vars.avgLiquidationThreshold)
       .sub(vars.amountToDecreaseInETH.mul(vars.liquidationThreshold))
       .div(vars.collateralBalanceAfterDecrease);
+    console.log(
+      'balanceDecreaseAllowed liquidationThresholdAfterDecrease:%d',
+      vars.liquidationThresholdAfterDecrease
+    );
 
     uint256 healthFactorAfterDecrease =
       calculateHealthFactorFromBalances(
@@ -114,7 +124,10 @@ library GenericLogic {
         vars.totalDebtInETH,
         vars.liquidationThresholdAfterDecrease
       );
-
+    console.log(
+      'balanceDecreaseAllowed healthFactorAfterDecrease:%d',
+      vars.healthFactorAfterDecrease
+    );
     return healthFactorAfterDecrease >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
   }
 
@@ -294,31 +307,13 @@ library GenericLogic {
     return availableBorrowsETH;
   }
 
-  function makeEnzymePool(
-    address fromAsset,
-    address toAsset,
-    mapping(address => DataTypes.ReserveData) storage _reserves
-  ) internal {
-    DataTypes.ReserveData memory reserve;
-    reserve.liquidityIndex = _reserves[fromAsset].liquidityIndex;
-    reserve.variableBorrowIndex = _reserves[fromAsset].variableBorrowIndex;
-    reserve.currentLiquidityRate = _reserves[fromAsset].currentLiquidityRate;
-    reserve.currentVariableBorrowRate = _reserves[fromAsset].currentVariableBorrowRate;
-    reserve.currentStableBorrowRate = _reserves[fromAsset].currentStableBorrowRate;
-    reserve.lastUpdateTimestamp = _reserves[fromAsset].lastUpdateTimestamp;
-    //new pool from existing token pool has aToken address that is vault address as well
-    reserve.aTokenAddress = _reserves[fromAsset].aTokenAddress;
-    reserve.vaultAddress = toAsset;
-    reserve.stableDebtTokenAddress = _reserves[fromAsset].stableDebtTokenAddress;
-    reserve.variableDebtTokenAddress = _reserves[fromAsset].variableDebtTokenAddress;
-    reserve.interestRateStrategyAddress = _reserves[fromAsset].interestRateStrategyAddress;
-    reserve.configuration.data = _reserves[fromAsset].configuration.data;
-    console.log('makeEnzymePool:Set addresses');
-    reserve.configuration.setBorrowingEnabled(true);
-    reserve.configuration.setStableRateBorrowingEnabled(true);
-    console.log('makeEnzymePool:set calls');
-    _reserves[toAsset] = reserve;
-    console.log('makeEnzymePool:Set reserve');
-    console.log('makeEnzymePool:Set _addReserveToList');
+  function getEnzymeBridge(ILendingPoolAddressesProvider _addressesProvider)
+    external
+    returns (address)
+  {
+    bytes32 contractId = 'EnzymeBridgeId';
+    address enzymeBridgeAddress = _addressesProvider.getAddress(contractId);
+    console.log('Borrow obtained bridge:%s', enzymeBridgeAddress);
+    return enzymeBridgeAddress;
   }
 }
