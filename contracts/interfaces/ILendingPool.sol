@@ -416,10 +416,7 @@ interface ILendingPool {
     external
     returns (
       address,
-      address,
       uint256,
       uint256
     );
-
-  function makeEnzymePool(address fromAsset, address toAsset) external;
 }

@@ -128,17 +128,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   ) external override whenNotPaused {
     console.log('deposit called');
     //Send deposit into enzyme fund. aToken address will be replaced with fund
-    bytes32 contractId = 'EnzymeBridgeId';
-    address enzymeBridgeAddress = _addressesProvider.getAddress(contractId);
-    console.log('deposit,enzymeBridgeAddress:%s', enzymeBridgeAddress);
+    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
     (address vault, address comptroller) =
       IEnzymeBridge(enzymeBridgeAddress).deposit(onBehalfOf, asset, amount);
-    console.log('deposit,enzymeBridgeAddress completed:%s', enzymeBridgeAddress);
-    console.log('deposit vault Proxy:%s', vault);
 
     //fetch vault reserve instead of asset
-    DataTypes.ReserveData storage reserve = _reserves[vault];
+    DataTypes.ReserveData storage reserve = _reserves[asset];
     console.log('deposit_reserves');
+    reserve.updateState();
 
     //DataTypes.ReserveData storage reserve = _reserves[asset];
     ValidationLogic.validateDeposit(reserve, amount);
@@ -146,15 +143,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     //vault aToken is set to its vault address. So we transfer token to vault
     address aToken = reserve.aTokenAddress;
-    address vaultAddress = reserve.vaultAddress;
     console.log('deposit aToken:%s', aToken);
-    console.log('deposit vaultAddress:%s', vaultAddress);
 
-    reserve.updateState();
-    reserve.updateInterestRates(asset, aToken, amount, 0);
-    console.log('deposit updateInterestRates');
-
-    IERC20(asset).transferFrom(msg.sender, vaultAddress, amount);
+    IERC20(asset).transferFrom(msg.sender, vault, amount);
     console.log('deposit transferFrom');
 
     bool isFirstDeposit = IAToken(aToken).mint(onBehalfOf, amount, reserve.liquidityIndex);
@@ -186,6 +177,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 amount,
     address to
   ) external override whenNotPaused returns (uint256) {
+    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
+
+    address userVault = IEnzymeBridge(enzymeBridgeAddress).getUserVault(to, asset);
+
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     address aToken = reserve.aTokenAddress;
@@ -208,17 +203,19 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _reservesCount,
       _addressesProvider.getPriceOracle()
     );
-
     reserve.updateState();
-
-    reserve.updateInterestRates(asset, aToken, 0, amountToWithdraw);
 
     if (amountToWithdraw == userBalance) {
       _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, false);
       emit ReserveUsedAsCollateralDisabled(asset, msg.sender);
     }
 
-    IAToken(aToken).burn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
+    //just burn only atokens
+    IAToken(aToken).justBurn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
+    //userVault will burn amount aToken and transfer underlying asset to user
+    address underlyingAssetAddress = IAToken(aToken).UNDERLYING_ASSET_ADDRESS();
+    IVault(userVault).transferUnderlyingTo(underlyingAssetAddress, to, amountToWithdraw);
+    //IAToken(aToken).burn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
 
     emit Withdraw(asset, msg.sender, to, amountToWithdraw);
 
@@ -247,12 +244,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint16 referralCode,
     address onBehalfOf
   ) external override whenNotPaused {
-    bytes32 contractId = 'EnzymeBridgeId';
-    address enzymeBridgeAddress = _addressesProvider.getAddress(contractId);
-    console.log('Borrow obtained bridge:%s', enzymeBridgeAddress);
+    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
 
     address commonVaultAddress = IEnzymeBridge(enzymeBridgeAddress).getCommonVault(asset);
-    console.log('Borrow obtained common vault:%s', commonVaultAddress);
 
     (address vault, address comptroller) =
       IEnzymeBridge(enzymeBridgeAddress).borrow(
@@ -262,7 +256,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         onBehalfOf,
         _reservesCount
       );
-    DataTypes.ReserveData storage reserve = _reserves[vault];
+    DataTypes.ReserveData storage reserve = _reserves[asset];
 
     _executeBorrow(
       ExecuteBorrowParams(
@@ -274,7 +268,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         reserve.aTokenAddress,
         referralCode,
         true,
-        reserve.vaultAddress,
+        vault,
         comptroller,
         commonVaultAddress
       )
@@ -866,7 +860,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     override
     returns (
       address,
-      address,
       uint256,
       uint256
     )
@@ -876,17 +869,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     (uint256 ltv, uint256 liquidationThreshold, , uint256 decimals, ) =
       currentReserve.configuration.getParams();
-    return (
-      currentReserve.aTokenAddress,
-      currentReserve.vaultAddress,
-      liquidationThreshold,
-      decimals
-    );
-  }
-
-  function makeEnzymePool(address fromAsset, address toAsset) external override {
-    GenericLogic.makeEnzymePool(fromAsset, toAsset, _reserves);
-    _addReserveToList(toAsset);
+    return (currentReserve.aTokenAddress, liquidationThreshold, decimals);
   }
 
   function _executeBorrow(ExecuteBorrowParams memory vars) internal {
@@ -914,6 +897,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _reservesCount,
       oracle
     );
+
+    reserve.updateState();
 
     uint256 currentStableRate = 0;
 
