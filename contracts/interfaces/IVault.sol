@@ -101,4 +101,6 @@ interface IVault is IMigratableVault, IFreelyTransferableSharesVault, IExternalP
     uint256 amount,
     address underlyingAssetAddress
   ) external;
+
+  function handleRepayment(address, uint256) external;
 }

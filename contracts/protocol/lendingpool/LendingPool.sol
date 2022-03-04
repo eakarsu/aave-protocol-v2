@@ -119,6 +119,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    *   is a different wallet
    * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
    *   0 if the action is executed directly by the user, without any middle-man
+   * User need to approve lendingpool for IERC20(asset).transferFrom(msg.sender, vault, amount);
+   * User can aproove await dai.connect(user2).approve(lendingPool.address,'100')
    **/
   function deposit(
     address asset,
@@ -285,6 +287,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
    * user calling the function if he wants to reduce/remove his own debt, or the address of any other
    * other borrower whose debt should be removed
+   * User need to approve lendingpool for IERC20(asset).transferFrom(msg.sender, userVault, paybackAmount);
+   * User can aproove await dai.connect(user2).approve(lendingPool.address,'100')
    * @return The final amount repaid
    **/
   function repay(
@@ -293,6 +297,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 rateMode,
     address onBehalfOf
   ) external override whenNotPaused returns (uint256) {
+    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
+
+    address userVault = IEnzymeBridge(enzymeBridgeAddress).getUserVault(onBehalfOf, asset);
+
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     (uint256 stableDebt, uint256 variableDebt) = Helpers.getUserCurrentDebt(onBehalfOf, reserve);
@@ -327,16 +335,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       );
     }
 
-    address aToken = reserve.aTokenAddress;
-    reserve.updateInterestRates(asset, aToken, paybackAmount, 0);
-
     if (stableDebt.add(variableDebt).sub(paybackAmount) == 0) {
       _usersConfig[onBehalfOf].setBorrowing(reserve.id, false);
     }
 
-    IERC20(asset).transferFrom(msg.sender, aToken, paybackAmount);
+    IERC20(asset).transferFrom(msg.sender, userVault, paybackAmount);
 
-    IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
+    IVault(userVault).handleRepayment(msg.sender, paybackAmount);
 
     emit Repay(asset, onBehalfOf, msg.sender, paybackAmount);
 

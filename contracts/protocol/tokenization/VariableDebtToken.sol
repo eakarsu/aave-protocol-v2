@@ -7,6 +7,7 @@ import {Errors} from '../libraries/helpers/Errors.sol';
 import {DebtTokenBase} from './base/DebtTokenBase.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title VariableDebtToken
@@ -74,12 +75,7 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
    **/
   function balanceOf(address user) public view virtual override returns (uint256) {
     uint256 scaledBalance = super.balanceOf(user);
-
-    if (scaledBalance == 0) {
-      return 0;
-    }
-
-    return scaledBalance.rayMul(_pool.getReserveNormalizedVariableDebt(_underlyingAsset));
+    return scaledBalance;
   }
 
   /**
@@ -98,13 +94,23 @@ contract VariableDebtToken is DebtTokenBase, IVariableDebtToken {
     uint256 amount,
     uint256 index
   ) external override onlyLendingPool returns (bool) {
+    console.log('Var Dep: mint');
+    console.log('Var Dep: mint:user:%s', user);
+    console.log('Var Dep: mint:amount:%d', amount);
+    console.log('Var Dep: mint:onBehalf:%s', onBehalfOf);
+
     if (user != onBehalfOf) {
+      console.log('Var Dept: user<>onBehalfOf');
       _decreaseBorrowAllowance(onBehalfOf, user, amount);
     }
 
     uint256 previousBalance = super.balanceOf(onBehalfOf);
     uint256 amountScaled = amount.rayDiv(index);
     require(amountScaled != 0, Errors.CT_INVALID_MINT_AMOUNT);
+
+    console.log('Var Dept:mint:user:%s', onBehalfOf);
+    console.log('Var Dept:mint:amountScaled:%d', amountScaled);
+    console.log('Var Dept:mint:oldBalance:%d', previousBalance);
 
     _mint(onBehalfOf, amountScaled);
 

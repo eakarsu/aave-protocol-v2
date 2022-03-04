@@ -8,6 +8,7 @@ import {IStableDebtToken} from '../../interfaces/IStableDebtToken.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title StableDebtToken
@@ -105,13 +106,7 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
    **/
   function balanceOf(address account) public view virtual override returns (uint256) {
     uint256 accountBalance = super.balanceOf(account);
-    uint256 stableRate = _usersStableRate[account];
-    if (accountBalance == 0) {
-      return 0;
-    }
-    uint256 cumulatedInterest =
-      MathUtils.calculateCompoundedInterest(stableRate, _timestamps[account]);
-    return accountBalance.rayMul(cumulatedInterest);
+    return accountBalance;
   }
 
   struct MintLocalVars {
@@ -140,12 +135,19 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
     uint256 rate
   ) external override onlyLendingPool returns (bool) {
     MintLocalVars memory vars;
+    console.log('Stable Dep: mint:user:%s', user);
+    console.log('Stable Dep: mint:amount:%d', amount);
+    console.log('Stable Dep: mint:onBehalf:%s', onBehalfOf);
 
+    console.log('Stable Dep: mint');
     if (user != onBehalfOf) {
+      console.log('Stable Dept: user<>onBehalfOf');
       _decreaseBorrowAllowance(onBehalfOf, user, amount);
     }
 
     (, uint256 currentBalance, uint256 balanceIncrease) = _calculateBalanceIncrease(onBehalfOf);
+    console.log('Stable Dep:currentBalance:%d', currentBalance);
+    console.log('Stable Dep:balanceIncrease:%d', balanceIncrease);
 
     vars.previousSupply = totalSupply();
     vars.currentAvgStableRate = _avgStableRate;
@@ -171,6 +173,9 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
       .add(rate.rayMul(vars.amountInRay))
       .rayDiv(vars.nextSupply.wadToRay());
 
+    console.log('Stable Dept:mint:user:%s', onBehalfOf);
+    console.log('Stable Dept:mint:amount:%d', amount.add(balanceIncrease));
+    console.log('Stable Dept:mint:oldBalance:%d', vars.previousSupply);
     _mint(onBehalfOf, amount.add(balanceIncrease), vars.previousSupply);
 
     emit Transfer(address(0), onBehalfOf, amount);
@@ -201,6 +206,12 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
     uint256 newAvgStableRate = 0;
     uint256 nextSupply = 0;
     uint256 userStableRate = _usersStableRate[user];
+    console.log('StableDebtToken:burn:user:%s', user);
+    console.log('StableDebtToken:burn:amount:%d', amount);
+    console.log('StableDebtToken:burn:currentBalance:%d', currentBalance);
+    console.log('StableDebtToken:burn:balanceIncrease:%d', balanceIncrease);
+    console.log('StableDebtToken:burn:previousSupply:%d', previousSupply);
+    console.log('StableDebtToken:burn:userStableRate:%d', userStableRate);
 
     // Since the total supply and each single user debt accrue separately,
     // there might be accumulation errors so that the last borrower repaying
@@ -384,15 +395,7 @@ contract StableDebtToken is IStableDebtToken, DebtTokenBase {
    **/
   function _calcTotalSupply(uint256 avgRate) internal view virtual returns (uint256) {
     uint256 principalSupply = super.totalSupply();
-
-    if (principalSupply == 0) {
-      return 0;
-    }
-
-    uint256 cumulatedInterest =
-      MathUtils.calculateCompoundedInterest(avgRate, _totalSupplyTimestamp);
-
-    return principalSupply.rayMul(cumulatedInterest);
+    return principalSupply;
   }
 
   /**
