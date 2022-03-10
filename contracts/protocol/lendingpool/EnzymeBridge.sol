@@ -127,6 +127,8 @@ contract EnzymeBridge is IEnzymeBridge {
       targetComptroller = _commonComptrollers[asset];
       targetVault = _commonVaults[asset];
     }
+    console.log('Enzyme Bridge:targetVault:%s', targetVault);
+    console.log('Enzyme Bridge:targetComptroller:%s', targetComptroller);
     return (targetVault, targetComptroller);
   }
 

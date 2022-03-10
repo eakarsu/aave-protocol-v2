@@ -63,7 +63,12 @@ const getCommonNetworkConfig = (networkName: eNetwork, networkId: number) => ({
   gasMultiplier: DEFAULT_GAS_MUL,
   gasPrice: NETWORKS_DEFAULT_GAS[networkName],
   chainId: networkId,
-  accounts: ["fe213458a92f3f0764ab7cd006682c8dc6c8f7563b70a625417e5be7c0e2133e"],
+
+  accounts: [
+    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+    '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
+    '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
+  ],
   /*
   accounts: {
     mnemonic: MNEMONIC,
@@ -112,7 +117,7 @@ const buidlerConfig: HardhatUserConfig = {
     xdai: getCommonNetworkConfig(eXDaiNetwork.xdai, 100),
     avalanche: getCommonNetworkConfig(eAvalancheNetwork.avalanche, 43114),
     fuji: getCommonNetworkConfig(eAvalancheNetwork.fuji, 43113),
-    
+
     hardhat: {
       hardfork: 'berlin',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
@@ -122,13 +127,27 @@ const buidlerConfig: HardhatUserConfig = {
       chainId: 1,//BUIDLEREVM_CHAINID,
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
-      accounts: accounts.map(({ secretKey, balance }: { secretKey: string; balance: string }) => ({
+      accounts: [
+        {
+          privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+          balance: '100000000000000000000000000000000000000',
+        },
+        {
+          privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
+          balance: '100000000000000000000000000000000000000',
+        },
+        {
+          privateKey: '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
+          balance: '100000000000000000000000000000000000000',
+        },
+      ],
+      /*accounts: accounts.map(({ secretKey, balance }: { secretKey: string; balance: string }) => ({
         privateKey: secretKey,
         balance,
-      })),
+      })),*/
       forking: buildForkConfig(),
     },
-    
+
     buidlerevm_docker: {
       hardfork: 'berlin',
       blockGasLimit: 9500000,
@@ -140,7 +159,7 @@ const buidlerConfig: HardhatUserConfig = {
       url: 'http://localhost:8545',
     },
     localhost: {
-      
+
       accounts: [
         '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
         '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
