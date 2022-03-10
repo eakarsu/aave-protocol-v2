@@ -91,21 +91,25 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
         collateralManagerAddress
       );
       const aaveProtocolDataProvider = await getAaveProtocolDataProvider();
+      console.log('after aaveProtocolDataProvider');
+
       await waitForTx(
         await addressesProvider.setAddress(
           '0x0100000000000000000000000000000000000000000000000000000000000000',
           aaveProtocolDataProvider.address
         )
       );
-
+      console.log('before deployWalletBalancerProvider');
       await deployWalletBalancerProvider(verify);
+      console.log('after deployWalletBalancerProvider');
 
-      const uiPoolDataProvider = await deployUiPoolDataProviderV2(
+      /*const uiPoolDataProvider = await deployUiPoolDataProviderV2(
         chainlinkAggregatorProxy[localBRE.network.name],
         chainlinkEthUsdAggregatorProxy[localBRE.network.name],
         verify
       );
       console.log('UiPoolDataProvider deployed at:', uiPoolDataProvider.address);
+      */
 
       const lendingPoolAddress = await addressesProvider.getLendingPool();
 
