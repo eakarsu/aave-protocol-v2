@@ -20,6 +20,7 @@ import {
 
 require('dotenv').config();
 
+
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
 import 'temp-hardhat-etherscan';
@@ -57,17 +58,19 @@ if (!SKIP_LOAD) {
 require(`${path.join(__dirname, 'tasks/misc')}/set-bre.ts`);
 
 const getCommonNetworkConfig = (networkName: eNetwork, networkId: number) => ({
-  url: NETWORKS_RPC_URL[networkName],
-  hardfork: HARDFORK,
+  //url: NETWORKS_RPC_URL[networkName],
+  url: "https://eth-kovan.alchemyapi.io/v2/gURHc2znmQ9VlBz0e4qlQSsXia-SgqOj",
+  //hardfork: HARDFORK,
   blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
   gasMultiplier: DEFAULT_GAS_MUL,
   gasPrice: NETWORKS_DEFAULT_GAS[networkName],
   chainId: networkId,
 
   accounts: [
-    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-    '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
-    '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
+    //'0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+    //'0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
+    //'0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
+    `${process.env.KEY}`
   ],
   /*
   accounts: {
@@ -81,6 +84,7 @@ const getCommonNetworkConfig = (networkName: eNetwork, networkId: number) => ({
 let forkMode;
 
 const buidlerConfig: HardhatUserConfig = {
+
   solidity: {
     version: '0.6.12',
     settings: {
@@ -170,7 +174,8 @@ const buidlerConfig: HardhatUserConfig = {
       //chainId: 31337,
       loggingEnabled: true,
       timeout: 10000000,
-      url: 'http://localhost:8545'
+      url: 'http://34.68.190.98/ws2/'
+      //url: 'http://localhost:8545'
     },
    localhost_rinkeby: {
       url: 'http://localhost:8545',

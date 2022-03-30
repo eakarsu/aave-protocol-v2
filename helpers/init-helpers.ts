@@ -156,10 +156,11 @@ export const initReservesByHelper = async (
 
   console.log(`- Reserves initialization in ${chunkedInitInputParams.length} txs`);
   for (let chunkIndex = 0; chunkIndex < chunkedInitInputParams.length; chunkIndex++) {
+    console.log('Batch init reserve:' + JSON.stringify(chunkedInitInputParams[chunkIndex]));
     const tx3 = await waitForTx(
       await configurator.batchInitReserve(chunkedInitInputParams[chunkIndex])
     );
-
+    console.log('Batch init reserve done..');
     console.log(`  - Reserve ready for: ${chunkedSymbols[chunkIndex].join(', ')}`);
     console.log('    * gasUsed', tx3.gasUsed.toString());
     //console.log ("chunkedInitInputParams:"+JSON.stringify(chunkedInitInputParams));

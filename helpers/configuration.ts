@@ -23,7 +23,7 @@ export enum ConfigNames {
   Aave = 'Aave',
   Matic = 'Matic',
   Amm = 'Amm',
-  Avalanche = 'Avalanche'
+  Avalanche = 'Avalanche',
 }
 
 export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
@@ -34,8 +34,8 @@ export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
       return MaticConfig;
     case ConfigNames.Amm:
       return AmmConfig;
-      case ConfigNames.Avalanche:
-        return AvalancheConfig;
+    case ConfigNames.Avalanche:
+      return AvalancheConfig;
     case ConfigNames.Commons:
       return CommonsConfig;
     default:
@@ -65,7 +65,7 @@ export const getReservesConfigByPool = (pool: AavePools): iMultiPoolsAssets<IRes
       },
       [AavePools.avalanche]: {
         ...AvalancheConfig.ReservesConfig,
-      }
+      },
     },
     pool
   );
@@ -85,12 +85,26 @@ export const getGenesisPoolAdmin = async (
 
 export const getEmergencyAdmin = async (config: IBaseConfiguration): Promise<tEthereumAddress> => {
   const currentNetwork = process.env.FORK ? process.env.FORK : DRE.network.name;
+  console.log(
+    'getEmergencyAdmin:currentNetwork:' + currentNetwork + ' process.env.FORK=' + process.env.FORK
+  );
+
   const targetAddress = getParamPerNetwork(config.EmergencyAdmin, <eNetwork>currentNetwork);
+  console.log('getEmergencyAdmin:targetAddress:' + targetAddress);
   if (targetAddress) {
     return targetAddress;
   }
   const addressList = await getEthersSignersAddresses();
+  console.log('getEmergencyAdmin:addressList:' + JSON.stringify(addressList));
+
   const addressIndex = config.EmergencyAdminIndex;
+  console.log(
+    'getEmergencyAdmin:addressIndex:' +
+      addressIndex +
+      ' :addressList[addressIndex] ' +
+      addressList[addressIndex]
+  );
+
   return addressList[addressIndex];
 };
 

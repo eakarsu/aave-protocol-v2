@@ -125,9 +125,9 @@ export const CommonsConfig: ICommonConfiguration = {
     [eEthereumNetwork.main]: undefined,
     [eEthereumNetwork.tenderly]: undefined,
   },
-  EmergencyAdminIndex: 1,
+  EmergencyAdminIndex: 0,
   ProviderRegistry: {
-    [eEthereumNetwork.kovan]: '0x1E40B561EC587036f9789aF83236f057D1ed2A90',
+    [eEthereumNetwork.kovan]: '0x99C4ee90c9BA8Ad1defA2C36CFE289BDceAE6A21',
     [eEthereumNetwork.ropsten]: '',
     [eEthereumNetwork.main]: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
     [eEthereumNetwork.coverage]: '',
@@ -136,7 +136,7 @@ export const CommonsConfig: ICommonConfiguration = {
     [eEthereumNetwork.tenderly]: '0x52D306e36E3B6B02c153d0266ff0f85d18BCD413',
   },
   ProviderRegistryOwner: {
-    [eEthereumNetwork.kovan]: '0x85e4A467343c0dc4aDAB74Af84448D9c45D8ae6F',
+    [eEthereumNetwork.kovan]: '0x2f94B370030cf56bf14d8984D278Cbfc28e5d847',
     [eEthereumNetwork.ropsten]: '',
     [eEthereumNetwork.main]: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
     [eEthereumNetwork.coverage]: '',
