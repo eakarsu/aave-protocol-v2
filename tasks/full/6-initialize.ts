@@ -50,6 +50,7 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
       if (!reserveAssets) {
         throw 'Reserve assets is undefined. Check ReserveAssets configuration at config directory';
       }
+
       console.log('ReserveAssets:' + JSON.stringify(reserveAssets));
 
       const treasuryAddress = await getTreasuryAddress(poolConfig);

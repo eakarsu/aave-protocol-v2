@@ -85,16 +85,19 @@ export const getGenesisPoolAdmin = async (
 
 export const getEmergencyAdmin = async (config: IBaseConfiguration): Promise<tEthereumAddress> => {
   const currentNetwork = process.env.FORK ? process.env.FORK : DRE.network.name;
+
   console.log(
     'getEmergencyAdmin:currentNetwork:' + currentNetwork + ' process.env.FORK=' + process.env.FORK
   );
 
   const targetAddress = getParamPerNetwork(config.EmergencyAdmin, <eNetwork>currentNetwork);
   console.log('getEmergencyAdmin:targetAddress:' + targetAddress);
+
   if (targetAddress) {
     return targetAddress;
   }
   const addressList = await getEthersSignersAddresses();
+
   console.log('getEmergencyAdmin:addressList:' + JSON.stringify(addressList));
 
   const addressIndex = config.EmergencyAdminIndex;

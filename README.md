@@ -255,12 +255,14 @@ We can get all value of deposited tokens from getUserAccountData method, totalCo
 
 
 Deposit:
-Check if user vault exists. If it does, then move deposit token to exisiting fund. 
+Check if user vault exists. If it does, then move deposit token to exisiting fund.
    IERC20(asset).transferFrom(msg.sender, aToken, amount);
 Otherwise, we move token to CMP for token (it is found in atokenAddress of fund). (fund's atoken address is same as itself, vault address). In this way, we collect all deposits from users into same fund.If user just deposits but not borrow any, then its deposit will stay in CMP fund
+
 
  npx hardhat --network kovan full:deploy-address-provider-registry --pool Aave
 /usr/local/bin/npm run aave:kovan:full:migration
 
 export FORK=kovan
 npx hardhat --network kovan  aave:mainnet --skip-registry
+

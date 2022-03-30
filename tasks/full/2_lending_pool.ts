@@ -23,6 +23,7 @@ import {
   getGenesisPoolAdmin,
   getEmergencyAdmin,
 } from '../../helpers/configuration';
+
 import { utils } from 'ethers';
 
 task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
