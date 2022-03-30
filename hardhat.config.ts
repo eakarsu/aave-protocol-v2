@@ -174,8 +174,8 @@ const buidlerConfig: HardhatUserConfig = {
       //chainId: 31337,
       loggingEnabled: true,
       timeout: 10000000,
-      url: 'http://34.68.190.98/ws2/'
-      //url: 'http://localhost:8545'
+      //url: 'http://34.68.190.98/ws2/'
+      url: 'http://localhost:8545'
     },
    localhost_rinkeby: {
       url: 'http://localhost:8545',
