@@ -39,6 +39,10 @@ task('unpause', 'Unpause Pool')
         );
         //Unpause pool
         await lpc.setPoolPause(false);
+        console.log('Unpaused pool');
+      } else {
+        console.log(signers);
+        console.log("Couldn't find user from signers:" + localuseraddress);
       }
     } catch (err) {
       console.error(err);
