@@ -1,0 +1,263 @@
+ Hardhat config accounts must be empty. 
+ localhost: {
+
+      accounts: [
+    //    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+     //   '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
+      //  '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
+      ],
+      gas: 9000,
+      chainId: 1,
+      //chainId: 31337,
+      loggingEnabled: true,
+      timeout: 10000000,
+      url: 'http://localhost:8545'
+    },
+
+> myaddress="0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+'0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+
+We must change hardhat provider
+
+> hre.ethers.provider = new ethers.providers.JsonRpcProvider(hre.ethers.provider.connection.url)
+JsonRpcProvider {
+  _isProvider: true,
+  _events: [],
+  _emitted: { block: -2 },
+  formatter: Formatter {
+    formats: {
+      transaction: [Object],
+      transactionRequest: [Object],
+      receiptLog: [Object],
+      receipt: [Object],
+      block: [Object],
+      blockWithTransactions: [Object],
+      filter: [Object],
+      filterLog: [Object]
+    }
+  },
+  anyNetwork: false,
+  _networkPromise: Promise {
+    <pending>,
+    [Symbol(async_id_symbol)]: 101,
+    [Symbol(trigger_async_id_symbol)]: 13,
+    [Symbol(destroyed)]: { destroyed: false }
+  },
+  _maxInternalBlockNumber: -1024,
+  _lastBlockNumber: -2,
+  _pollingInterval: 4000,
+  _fastQueryDate: 0,
+  connection: { url: 'http://localhost:8545' },
+  _nextId: 42
+}
+> etherUserAddress=  "0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf";
+'0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf'
+> daiUserAddress="0x6B175474E89094C44Da98b954EedeAC495271d0F";
+'0x6B175474E89094C44Da98b954EedeAC495271d0F'
+
+We must create new provider
+
+> provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
+JsonRpcProvider {
+  _isProvider: true,
+  _events: [],
+  _emitted: { block: -2 },
+  formatter: Formatter {
+    formats: {
+      transaction: [Object],
+      transactionRequest: [Object],
+      receiptLog: [Object],
+      receipt: [Object],
+      block: [Object],
+      blockWithTransactions: [Object],
+      filter: [Object],
+      filterLog: [Object]
+    }
+  },
+  anyNetwork: false,
+  _networkPromise: Promise {
+    <pending>,
+    [Symbol(async_id_symbol)]: 110,
+    [Symbol(trigger_async_id_symbol)]: 13,
+    [Symbol(destroyed)]: { destroyed: false }
+  },
+  _maxInternalBlockNumber: -1024,
+  _lastBlockNumber: -2,
+  _pollingInterval: 4000,
+  _fastQueryDate: 0,
+  connection: { url: 'http://localhost:8545' },
+  _nextId: 42
+}
+> //provider = ethers.provider
+undefined
+> await provider.send("hardhat_impersonateAccount", [etherUserAddress]);
+true
+> const etherUser = provider.getSigner(etherUserAddress);
+undefined
+> await provider.send("hardhat_impersonateAccount", [daiUserAddress]);
+true
+> const daiUser = provider.getSigner(daiUserAddress);
+undefined
+> await etherUser.sendTransaction({
+...     to: myaddress,
+...     value: ethers.utils.parseEther('100.0'),
+... });
+{
+  hash: '0xbd74b80f16b33c56c854371a1f82e535a980b6d9bd08d147948647e45ee32934',
+  type: 2,
+  accessList: [],
+  blockHash: '0xad4a2dc4ff9274fc4bc97f9055e0263c0f91819fa8144adecffbfdc80813b1c6',
+  blockNumber: 14445758,
+  transactionIndex: 0,
+  confirmations: 1,
+  from: '0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf',
+  gasPrice: BigNumber { value: "1011470320" },
+  gasLimit: BigNumber { value: "21001" },
+  to: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  value: BigNumber { value: "100000000000000000000" },
+  nonce: 1,
+  data: '0x',
+  r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+  s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+  v: 1,
+  creates: null,
+  chainId: 1,
+  wait: [Function (anonymous)]
+}
+> 
+
+curve="0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+
+await provider.send("hardhat_impersonateAccount", [curve]);
+
+daiUser2 = provider.getSigner(curve);
+
+dai = await MintableERC20Factory.connect( daiAddress, daiUser2)
+
+
+await dai.transfer(signers[1].address,"10000000")
+{
+  hash: '0x2a2b0acfb87e3538b690f8e9264550f0ec5ffd9c0134595f9dc27e44cfd3c76e',
+  type: 2,
+  accessList: [],
+  blockHash: '0xd72e189bc1127d90b35ae24ebc68f353ff4a538102699d63de1be096715f2040',
+  blockNumber: 14445763,
+  transactionIndex: 0,
+  confirmations: 1,
+  from: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  gasPrice: BigNumber { value: "1005893143" },
+  gasLimit: BigNumber { value: "51770" },
+  to: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+  value: BigNumber { value: "0" },
+  nonce: 5,
+  data: '0xa9059cbb00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c80000000000000000000000000000000000000000000000000000000000989680',
+  r: '0x0000000000000000000000000000000000000000000000000000000000000001',
+  s: '0x0000000000000000000000000000000000000000000000000000000000000002',
+  v: 1,
+  creates: null,
+  chainId: 1,
+  wait: [Function (anonymous)]
+}
+> await dai.balanceOf(signers[1].address)
+BigNumber { value: "10000000" }
+
+
+await dai.transfer(signers[1].address,"10000000")
+
+await etherUser.sendTransaction({
+    to: daiUser.address,
+     value: ethers.utils.parseEther('100.0'),
+});
+
+ await newIv.connect(yearnVaultGovernance).setEmergencyShutdown(false)
+{
+  to: '0x19D3364A399d251E894aC732651be8B0E4e85001',
+  from: '0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52',
+  contractAddress: null,
+  transactionIndex: 0,
+  gasUsed: BigNumber { _hex: '0x7607', _isBigNumber: true },
+  logsBloom: '0x00000000000000000000000000000000000000100000000000000000000000400000000000000000000000100000000000000000000000000000000000800000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000000000000000000',
+  blockHash: '0x3173424edf6ad8b866ca07164099ecb0d500702f9b2d618f1f0506ce725aed39',
+  transactionHash: '0x01c0a89144714991f5165486d5b4bae2c47be44114f02bff34dc71000458cd54',
+  logs: [
+    {
+      transactionIndex: 0,
+      blockNumber: 14450980,
+      transactionHash: '0x01c0a89144714991f5165486d5b4bae2c47be44114f02bff34dc71000458cd54',
+      address: '0x19D3364A399d251E894aC732651be8B0E4e85001',
+      topics: [Array],
+      data: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      logIndex: 0,
+      blockHash: '0x3173424edf6ad8b866ca07164099ecb0d500702f9b2d618f1f0506ce725aed39'
+    }
+  ],
+  blockNumber: 14450980,
+  confirmations: 1,
+  cumulativeGasUsed: BigNumber { _hex: '0x7607', _isBigNumber: true },
+  effectiveGasPrice: BigNumber { _hex: '0x3b9aca08', _isBigNumber: true },
+  status: 1,
+  type: 2,
+  byzantium: true,
+  function: SendFunction {
+    contract: SpecializedContract {
+      address: '0x19D3364A399d251E894aC732651be8B0E4e85001',
+      abi: [Interface],
+      deployment: undefined,
+      __TYPE__: 'CONTRACT',
+      _signer: [JsonRpcSigner],
+      _provider: undefined
+    },
+    fragment: FunctionFragment {
+      type: 'function',
+      name: 'setEmergencyShutdown',
+      constant: false,
+      inputs: [Array],
+      outputs: [],
+      payable: false,
+      stateMutability: 'nonpayable',
+      gas: null,
+      _isFragment: true
+    },
+    options: {
+      args: [Array],
+      block: undefined,
+      bytecode: undefined,
+      from: undefined,
+      gas: undefined,
+      nonce: undefined,
+      price: undefined,
+      type: undefined,
+      value: undefined
+    },
+    __TYPE__: 'FUNCTION:SEND',
+    populated: Promise {
+      [Object],
+      [Symbol(async_id_symbol)]: 12599,
+      [Symbol(trigger_async_id_symbol)]: 21,
+      [Symbol(destroyed)]: [Object]
+    }
+  }
+}
+> 
+
+FundDeployerOwnerMixin:getFundDeployer:0x976c214741b4657bd99dfd38a5c0e3ac5c99d903
+    createNewFund:IProtocolFeeTracker
+    createNewFund:NewFundCreated:comptrollerProxy_:0x8fee1caaccb93f019b48d4405d7429ca3a1d7145
+    createNewFund:NewFundCreated:vaultProxy_:0xcf25c70d942a2db6a6d11a897be47d3d9153ab58
+    bridge deposit isCommonFundExist after createNewFund
+    Enzyme Bridge:targetVault:0xcf25c70d942a2db6a6d11a897be47d3d9153ab58
+    Enzyme Bridge:targetComptroller:0x8fee1caaccb93f019b48d4405d7429ca3a1d7145
+    deposit_reserves
+    deposit validateDeposit
+    deposit aToken:0x76f2899a27ae3ca8a14d2d5757065b31c6c5db4b
+    deposit transferFrom
+    deposit IAToken
+    deposit before setUsingAsCollateral
+    deposit after setUsingAsCollateral
+
+
+
+
+
+
+
