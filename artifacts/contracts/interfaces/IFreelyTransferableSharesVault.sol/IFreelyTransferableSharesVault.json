@@ -1,0 +1,24 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IFreelyTransferableSharesVault",
+  "sourceName": "contracts/interfaces/IFreelyTransferableSharesVault.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "sharesAreFreelyTransferable",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "sharesAreFreelyTransferable_",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
