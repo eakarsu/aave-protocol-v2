@@ -1,47 +1,52 @@
-name: Build
+name: Build and governance checks
 
 on:
   push:
-    branches: [master]
   pull_request:
-    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [14.x]
-
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
         with:
-          node-version: ${{ matrix.node-version }}
-      - uses: actions/cache@v2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install dependencies
+          node-version: 16.20.2
+          cache: npm
+      - name: Install locked dependencies
         run: npm ci
-      - name: Test
-        run: npm run ci:test
-      - name: Dev deployment
-        run: npm run aave:evm:dev:migration
-      - name: Mainnet deployment at Mainnet fork
-        run: npm run aave:fork:main
+      - name: Repository security, provenance, and governance checks
+        run: npm run health
+      - name: Compile contracts
+        run: npm run compile
+      - name: Enforce deployable bytecode limits
+        run: npm run verify:bytecode
+      - name: Run local contract tests
+        run: npm test
+
+  # Forked-network checks require an explicit manual dispatch and protected
+  # environment credentials. They are not silently treated as reproducible CI.
+  mainnet-fork:
+    if: github.event_name == 'workflow_dispatch'
+    environment: mainnet-fork-testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 16.20.2
+          cache: npm
+      - run: npm ci
+      - run: npm run aave:fork:main
         env:
-          ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
-      - name: Amm deployment at Mainnet fork
-        run: npm run amm:fork:main
-        env:
-          ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
-      # - name: Coverage
-      #   run: npm run coverage
-      # - uses: codecov/codecov-action@v1
-      #   with:
-      #     fail_ci_if_error: true
+          RPC_URL_MAIN: ${{ secrets.RPC_URL_MAIN }}

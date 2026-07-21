@@ -75,12 +75,23 @@ console.log(LendingPoolV2Artifact.abi)
 
 ## Setup
 
-The repository uses Docker Compose to manage sensitive keys and load the configuration. Prior any action like test or deploy, you must run `docker-compose up` to start the `contracts-env` container, and then connect to the container console via `docker-compose exec contracts-env bash`.
+Use Node.js 20 and the checked-in lockfile. Copy `.env.example` to an untracked
+`.env` only when a task needs external RPC or deployment credentials. Local
+security, provenance, governance, compilation, and contract tests do not need a
+funded account.
 
-Follow the next steps to setup the repository:
+```
+npm ci
+npm run health
+npm run compile
+npm test
+```
 
-- Install `docker` and `docker-compose`
-- Create an enviroment file named `.env` and fill the next enviroment variables
+Docker users can run the same nondestructive validation in an isolated container
+with `docker compose run --rm contracts-env`. Docker Compose no longer mounts a
+host Tenderly credential file or installs dependencies during startup.
+
+Environment variables are names-only in `.env.example`:
 
 ```
 # Mnemonic, only first address will be used
@@ -99,6 +110,29 @@ TENDERLY_PROJECT=""
 TENDERLY_USERNAME=""
 
 ```
+
+Remote RPC URLs must use verified HTTPS. Plain HTTP is accepted only for
+`localhost` or `127.0.0.1`. A requested fork fails closed when its RPC is not
+configured.
+
+## Security, provenance, and governed decisions
+
+- `npm run security:scan` rejects tracked secret files, credential literals,
+  credentialized provider URLs, secret logging, and TLS-verification bypasses.
+- `npm run security:history` reports sensitive-path history without displaying
+  contents. Provider-side rotation/revocation and any owner-approved history
+  rewrite remain external release gates; see `SECURITY_RESPONSE.md`.
+- `npm run provenance:verify` verifies the recorded origin, baseline commit,
+  license, whitepaper, and historical audit artifacts. Those audits do not
+  certify custom fork changes; see `PROVENANCE.md`.
+- `governance/` implements integrity-pinned source snapshots, jurisdiction and
+  effective-date validation, source change detection, versioned owned policies,
+  independent approval, required attestations, and hash-chained decisions.
+
+The governance tooling provides traceable decision support. It is not a legal,
+regulatory, financial, or security certification. Production deployment remains
+blocked until accountable owners supply the release evidence listed in the
+provenance and security documents.
 
 ## Markets configuration
 
@@ -224,40 +258,33 @@ await DAI.connect(signer).approve(lendingPool.address, ethers.utils.parseUnits('
 // Deposit 100 DAI
 await lendingPool.connect(signer).deposit(DAI.address, ethers.utils.parseUnits('100'), await signer.getAddress(), '0');
 ```
-set .env alchemy key and FORK=main
-Configure localhost network
-localhost: {
-      accounts: [
-        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-        '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
-        '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
-      ],
-      chainId: 1,
-      //chainId: 31337,
-      loggingEnabled: true,
-      timeout: 10000000,
-      url: 'http://localhost:8545',
-    },
+Copy `.env.example` to an untracked `.env`, configure `RPC_URL_MAIN` (or a
+provider key), and set `FORK=main`. Local test accounts are derived at runtime;
+never fund them or reuse them outside an isolated development chain.
 
 npx hardhat --network localhost  console
 Inside console, run
 run('set-DRE');
 await run('aave:dev')
 
- Here is deal,
+## Supported protocol path
 
-Aave deposit tokens into atoken address per token and borrow from there. When depositing, it gives a token, that is strange thing it does! When user deposits dai and aave transfers into aDai address for the token.
-So, we define enzyme pool per token where aToken is enzyme vault address. When aave deposit happens, it transfer token into vault, that is what want. When borrow happens, it pulls token from atoken address and give it user.
+The supported build preserves the audited Aave V2 custody, interest-accrual,
+flash-loan, liquidation, and proxy-authorization invariants. Local startup runs
+nondestructive repository checks only. Network migrations and forked-chain
+commands remain explicit operator actions and require untracked environment
+configuration.
 
-Borrow:
-The above principle works for CMP (common token fund created per token). this is one to one matching for all tokens. But for user specific token, we have  little modifacation to aave system. Let's keep a mapping structure for user's enzyme vault. We create user vault when user borrows something. We check if user vault was created before (an entry exists in  enzyme vault mapping for the user). If it doesn't exist, we create fund and move token to fund.Otheriwse, we get user vault from mapping, thne move token to the fund. We move deposit token from CMP into user specific fund. But we lost user identity when user deposit token(look below). But aave give us all tokens user deposited tokens (  function getUserAccountData method of LendingPool contract). Remember aToken value is same as deposited token.
-We can get all value of deposited tokens from getUserAccountData method, totalCollateralInETH. We move this aToken from CMP to user specific fund. What we need to to is that we move token CMP address to new user specific address.
+An unfinished Enzyme integration was removed from deployable sources because it
+changed those invariants without a complete implementation, provenance review,
+or applicable audit. See `EXPERIMENTAL_ENZYME_INTEGRATION.md` for the historical
+scope and the controls required before any redesign.
 
-
-Deposit:
-Check if user vault exists. If it does, then move deposit token to exisiting fund.
-   IERC20(asset).transferFrom(msg.sender, aToken, amount);
-Otherwise, we move token to CMP for token (it is found in atokenAddress of fund). (fund's atoken address is same as itself, vault address). In this way, we collect all deposits from users into same fund.If user just deposits but not borrow any, then its deposit will stay in CMP fund
+This repository also contains governance evidence tooling for versioned policies,
+source snapshots, distinct approvals, and hash-chained decisions. It is decision
+support, not legal advice, regulatory certification, or production-release
+authorization. See `governance/README.md`, `PROVENANCE.md`, and
+`DEPENDENCY_SECURITY.md` before treating any build as releasable.
 
 
  npx hardhat --network kovan full:deploy-address-provider-registry --pool Aave
@@ -265,4 +292,3 @@ Otherwise, we move token to CMP for token (it is found in atokenAddress of fund)
 
 export FORK=kovan
 npx hardhat --network kovan  aave:mainnet --skip-registry
-

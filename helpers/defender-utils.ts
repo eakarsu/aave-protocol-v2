@@ -1,5 +1,4 @@
 import { formatEther } from '@ethersproject/units';
-import { DefenderRelaySigner, DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
 import { Signer } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DRE, impersonateAccountsHardhat } from './misc-utils';
@@ -16,6 +15,13 @@ export const getDefenderRelaySigner = async () => {
   }
 
   const credentials = { apiKey: DEFENDER_API_KEY, apiSecret: DEFENDER_SECRET_KEY };
+
+  // Load the optional provider only when explicitly enabled. This keeps local
+  // compile/test paths independent from third-party credentialed integrations.
+  const {
+    DefenderRelaySigner,
+    DefenderRelayProvider,
+  } = require('defender-relay-client/lib/ethers');
 
   defenderSigner = new DefenderRelaySigner(credentials, new DefenderRelayProvider(credentials), {
     speed: 'fast',

@@ -1,4 +1,11 @@
-#.env
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
 #Buidler files
 cache
 artifacts
@@ -7,7 +14,7 @@ dist/
 build/
 .vscode
 .idea
-#/types
+types
 
 deployed-contracts.json
 
@@ -15,4 +22,3 @@ coverage
 .coverage_artifacts
 .coverage_cache
 .coverage_contracts
-

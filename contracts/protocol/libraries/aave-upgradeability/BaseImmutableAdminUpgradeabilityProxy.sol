@@ -2,7 +2,6 @@
 pragma solidity 0.6.12;
 
 import '../../../dependencies/openzeppelin/upgradeability/BaseUpgradeabilityProxy.sol';
-import 'hardhat/console.sol';
 
 /**
  * @title BaseImmutableAdminUpgradeabilityProxy
@@ -22,12 +21,9 @@ contract BaseImmutableAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
   }
 
   modifier ifAdmin() {
-    console.log('IfAdmin');
     if (msg.sender == ADMIN) {
-      console.log('IfAdmin Yes');
       _;
     } else {
-      console.log('IfAdmin NO');
       _fallback();
     }
   }
@@ -67,13 +63,10 @@ contract BaseImmutableAdminUpgradeabilityProxy is BaseUpgradeabilityProxy {
   function upgradeToAndCall(address newImplementation, bytes calldata data)
     external
     payable
-  //ifAdmin
+    ifAdmin
   {
-    console.log('upgradeToAndCall');
     _upgradeTo(newImplementation);
-    console.log('_upgradeTo:');
     (bool success, ) = newImplementation.delegatecall(data);
-    console.log('delegatecall:');
     require(success);
   }
 

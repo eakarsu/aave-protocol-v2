@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "project": "@aave/protocol-v2",
+  "origin": "https://github.com/eakarsu/aave-protocol-v2",
+  "baselineCommit": "eef3c858c1c2547a6ced7ffdce5d335aa396dac4",
+  "declaredUpstream": "https://github.com/aave/protocol-v2",
+  "upstreamReconciliation": "required-before-release",
+  "license": {
+    "expression": "AGPL-3.0-or-later",
+    "path": "LICENSE.md",
+    "sha256": "422d833d478a14b5d51d0157c6bd9b752aef4e829cc3f47963c8ae1f7dc26080"
+  },
+  "evidence": [
+    {
+      "path": "aave-v2-whitepaper.pdf",
+      "sha256": "f87f68104480d3184c976c36cca584051e23fa30d5e3296eda656e22f232cf41",
+      "scope": "historical Aave V2 design evidence"
+    },
+    {
+      "path": "audits/Certik-aave-v2-03-12-2020.pdf",
+      "sha256": "d6616bd9b702f5e9861b9573a532ce09e9575a4c76044d4366ff5a35585ad3d4",
+      "scope": "historical audit; not fork certification"
+    },
+    {
+      "path": "audits/Certora-FV-aave-v2-03-12-2020.pdf",
+      "sha256": "83b8f4e29a5d17b2cb6af45a87bf78da5695a7c6a7c57f129e5b989ae6132143",
+      "scope": "historical formal-verification report; not fork certification"
+    },
+    {
+      "path": "audits/Mixbytes-aave-v2-03-12-2020.pdf",
+      "sha256": "e495844665e8b707c88d8127462eb73a61ec424a9984a6e4686a837946aced02",
+      "scope": "historical audit; not fork certification"
+    },
+    {
+      "path": "audits/PeckShield-aave-v2-03-12-2020-CN.pdf",
+      "sha256": "f1b0f8f8b54692f0aaf2b8870b9b3fb0cfc645c62deba093d1fd38fcf29dd155",
+      "scope": "historical audit; not fork certification"
+    },
+    {
+      "path": "audits/Peckshield-aave-v2-03-12-2020-EN.pdf",
+      "sha256": "e3f0380e1c9a4a96309d8529b5abd8e024c2d6b887005d11ec94d5d1458a10fd",
+      "scope": "historical audit; not fork certification"
+    },
+    {
+      "path": "audits/SigmaPrime-aave-v2-01-2021.pdf",
+      "sha256": "3f52df7af360a31740cac8d32adfbce2f8f7c32cc552b2838534e2e258380093",
+      "scope": "historical audit; not fork certification"
+    }
+  ],
+  "releaseGates": [
+    "upstream and custom-change reconciliation",
+    "custom-code authorship and license approval",
+    "credential revocation evidence",
+    "release-commit security assessment"
+  ]
+}

@@ -3,8 +3,6 @@ import { getParamPerNetwork, insertContractAddressInDb } from '../../helpers/con
 import {
   deployATokenImplementations,
   deployATokensAndRatesHelper,
-  deployEnzymeBridge,
-  deployEnzymeLendingPool,
   deployLendingPool,
   deployLendingPoolConfigurator,
   deployStableAndVariableTokensHelper,
@@ -23,8 +21,6 @@ import {
   getGenesisPoolAdmin,
   getEmergencyAdmin,
 } from '../../helpers/configuration';
-
-import { utils } from 'ethers';
 
 task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
   .addFlag('verify', 'Verify contracts at Etherscan')
@@ -66,14 +62,6 @@ task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
         '\tSetting lending pool configurator implementation with address:',
         lendingPoolConfiguratorImplAddress
       );
-
-      //Enzyme Bridge and Enzyme pool
-      const enzymeLendingPoolImpl = await deployEnzymeLendingPool(verify);
-      const id1 = utils.keccak256(utils.toUtf8Bytes('EnzymeLendingPoolManagerId'));
-      await waitForTx(await addressesProvider.setAddress(id1, enzymeLendingPoolImpl.address));
-      const enzymeBridgeImpl = await deployEnzymeBridge(verify);
-      const id2 = utils.keccak256(utils.toUtf8Bytes('EnzymeBridgeId'));
-      await waitForTx(await addressesProvider.setAddress(id2, enzymeBridgeImpl.address));
 
       // Set lending pool conf impl to Address Provider
       await waitForTx(

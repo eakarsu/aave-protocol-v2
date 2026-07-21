@@ -654,11 +654,6 @@ const _abi = [
             name: "id",
             type: "uint8",
           },
-          {
-            internalType: "address",
-            name: "vaultAddress",
-            type: "address",
-          },
         ],
         internalType: "struct DataTypes.ReserveData",
         name: "",
@@ -666,35 +661,6 @@ const _abi = [
       },
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "reserveOrder",
-        type: "uint256",
-      },
-    ],
-    name: "getReserveDataForUser",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -799,35 +765,6 @@ const _abi = [
         name: "user",
         type: "address",
       },
-      {
-        internalType: "uint256",
-        name: "reserveOrder",
-        type: "uint256",
-      },
-    ],
-    name: "getUserConfig",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
     ],
     name: "getUserConfiguration",
     outputs: [
@@ -877,25 +814,6 @@ const _abi = [
     ],
     name: "initReserve",
     outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
-    ],
-    name: "isUserEmptyConfig",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
     stateMutability: "nonpayable",
     type: "function",
   },

@@ -33,7 +33,6 @@ import {
   WETH9MockedFactory,
   WETHGatewayFactory,
   FlashLiquidationAdapterFactory,
-  EnzymeLendingPoolManagerFactory,
 } from '../types';
 import { IERC20DetailedFactory } from '../types/IERC20DetailedFactory';
 import { getEthersSigners, MockTokenMap } from './contracts-helpers';
@@ -41,16 +40,6 @@ import { DRE, getDb, notFalsyOrZeroAddress, omit } from './misc-utils';
 import { eContractid, PoolConfiguration, tEthereumAddress, TokenContractId } from './types';
 
 export const getFirstSigner = async () => (await getEthersSigners())[0];
-
-export const getEnzymeLendingPoolManagerProvider = async (address?: tEthereumAddress) => {
-  return await EnzymeLendingPoolManagerFactory.connect(
-    address ||
-      (
-        await getDb().get(`${eContractid.EnzymeLendingPoolManager}.${DRE.network.name}`).value()
-      ).address,
-    await getFirstSigner()
-  );
-};
 
 export const getLendingPoolAddressesProvider = async (address?: tEthereumAddress) => {
   return await LendingPoolAddressesProviderFactory.connect(

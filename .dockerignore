@@ -1,0 +1,14 @@
+/.git/
+.env
+.env.*
+!.env.example
+.npmrc
+/artifacts/
+/cache/
+/coverage/
+/node_modules/
+/types/
+*.key
+*.pem
+*.p12
+*.pfx

@@ -5,15 +5,12 @@ import FileSync from 'lowdb/adapters/FileSync';
 import { WAD } from './constants';
 import { Wallet, ContractTransaction } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { BuidlerRuntimeEnvironment } from '@nomiclabs/buidler/types';
 import { tEthereumAddress } from './types';
 import { isAddress } from 'ethers/lib/utils';
 import { isZeroAddress } from 'ethereumjs-util';
 import { SignerWithAddress } from '../test-suites/test-aave/helpers/make-suite';
 import { usingTenderly } from './tenderly-utils';
-import fs from 'fs';
 
-const contractGetters = require('./contracts-getters');
 export const toWad = (value: string | number) => new BigNumber(value).times(WAD).toFixed();
 
 export const bnToBigNumber = (amount: BN): BigNumber => new BigNumber(<any>amount);
@@ -21,9 +18,9 @@ export const stringToBigNumber = (amount: string): BigNumber => new BigNumber(am
 
 export const getDb = () => low(new FileSync('./deployed-contracts.json'));
 
-export let DRE: HardhatRuntimeEnvironment | BuidlerRuntimeEnvironment;
+export let DRE: HardhatRuntimeEnvironment;
 
-export const setDRE = (_DRE: HardhatRuntimeEnvironment | BuidlerRuntimeEnvironment) => {
+export const setDRE = (_DRE: HardhatRuntimeEnvironment) => {
   DRE = _DRE;
 };
 
@@ -97,7 +94,7 @@ interface DbEntry {
   };
 }
 
-export const printContracts = async () => {
+export const printContracts = () => {
   const network = DRE.network.name;
   const db = getDb();
   console.log('Contracts deployed at', network);
@@ -109,70 +106,8 @@ export const printContracts = async () => {
     ([key, value]: [string, DbEntry]) => `${key}: ${value[network].address}`
   );
 
-  const allContracts = contractsPrint.join('\n') + '\n';
   console.log('N# Contracts:', entries.length);
-  console.log(allContracts, '\n');
-
-  const protocolProvider = await contractGetters.getAaveProtocolDataProvider();
-  const atokens = await protocolProvider.getAllATokens();
-
-  const allAtokens = atokens.map((token) => token.symbol + ':' + token.tokenAddress).join('\n');
-  const localFile = '/home/eakarsu/ProsperityFinance/erol-enzyme-aave-fork-protocol/aave.out';
-  require('fs').appendFileSync(localFile, allContracts);
-  require('fs').appendFileSync(localFile, allAtokens);
-
-  atokens.forEach((token) => {
-    console.log(token.symbol + ':' + token.tokenAddress);
-  });
-};
-
-export const printContractsTestEnzyme = async () => {
-  const network = DRE.network.name;
-  const db = getDb();
-  console.log('Contracts deployed at', network);
-  console.log('---------------------------------');
-
-  const entries = Object.entries<DbEntry>(db.getState()).filter(([_k, value]) => !!value[network]);
-  let lendingPool = '';
-  let enzymeBridge = '';
-  let reserveLogic = '';
-  let genericLogic = '';
-  let validationLogic = '';
-  const contractsPrint = entries.map(([key, value]: [string, DbEntry]) => {
-    const data = `${key}: ${value[network].address}`;
-    if (key == 'EnzymeBridge') {
-      enzymeBridge = data;
-    }
-    if (key == 'LendingPool') {
-      lendingPool = data;
-    }
-    if (key == 'ReserveLogic') {
-      reserveLogic = data;
-    }
-    if (key == 'GenericLogic') {
-      genericLogic = data;
-    }
-    if (key == 'ValidationLogic') {
-      validationLogic = data;
-    }
-    return data;
-  });
-
-  console.log('N# Contracts:', entries.length);
-  console.log(lendingPool + '\n');
-  console.log(enzymeBridge + '\n');
-  console.log(reserveLogic + '\n');
-  console.log(genericLogic + '\n');
-  console.log(validationLogic + '\n');
-
-  const localFile = '/home/eakarsu/ProsperityFinance/erol-enzyme-aave-fork-protocol/aave.out';
-  const fs = require('fs');
-  fs.ftruncate(localFile);
-  fs.appendFileSync(localFile, lendingPool + '\n');
-  fs.appendFileSync(localFile, enzymeBridge + '\n');
-  fs.appendFileSync(localFile, reserveLogic + '\n');
-  fs.appendFileSync(localFile, genericLogic + '\n');
-  fs.appendFileSync(localFile, validationLogic + '\n');
+  console.log(contractsPrint.join('\n'), '\n');
 };
 
 export const notFalsyOrZeroAddress = (address: tEthereumAddress | null | undefined): boolean => {

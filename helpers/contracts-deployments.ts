@@ -55,9 +55,6 @@ import {
   UiPoolDataProviderV2V3Factory,
   UiIncentiveDataProviderV2V3,
   UiIncentiveDataProviderV2Factory,
-  EnzymeLendingPoolManager,
-  EnzymeLendingPoolManagerFactory,
-  EnzymeBridgeFactory,
 } from '../types';
 import {
   withSaveAndVerify,
@@ -70,8 +67,6 @@ import {
 } from './contracts-helpers';
 import { StableAndVariableTokensHelperFactory } from '../types/StableAndVariableTokensHelperFactory';
 import { MintableDelegationERC20 } from '../types/MintableDelegationERC20';
-import { readArtifact as buidlerReadArtifact } from '@nomiclabs/buidler/plugins';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { LendingPoolLibraryAddresses } from '../types/LendingPoolFactory';
 import { UiPoolDataProvider } from '../types';
 import { eNetwork } from './types';
@@ -137,10 +132,7 @@ export const deployUiPoolDataProvider = async (
 };
 
 const readArtifact = async (id: string) => {
-  if (DRE.network.name === eEthereumNetwork.buidlerevm) {
-    return buidlerReadArtifact(DRE.config.paths.artifacts, id);
-  }
-  return (DRE as HardhatRuntimeEnvironment).artifacts.readArtifact(id);
+  return DRE.artifacts.readArtifact(id);
 };
 
 export const deployLendingPoolAddressesProvider = async (marketId: string, verify?: boolean) =>
@@ -245,34 +237,13 @@ export const deployAaveLibraries = async (
   // libName example: GenericLogic
   return {
     ['__$de8c0cf1a7d7c36c802af9a64fb9d86036$__']: validationLogic.address,
-    ['__$52a8a86ab43135662ff256bbc95497e8e3$__']: genericLogic.address,
     ['__$22cd43a9dda9ce44e9b92ba393b88fb9ac$__']: reserveLogic.address,
   };
 };
 
-export const deployEnzymeLendingPool = async (verify?: boolean) => {
-  const enzymeLendingPoolImpl = await new EnzymeLendingPoolManagerFactory(
-    await getFirstSigner()
-  ).deploy();
-  await insertContractAddressInDb(
-    eContractid.EnzymeLendingPoolManager,
-    enzymeLendingPoolImpl.address
-  );
-  return withSaveAndVerify(enzymeLendingPoolImpl, eContractid.EnzymeLendingPoolManager, [], verify);
-};
-
-export const deployEnzymeBridge = async (verify?: boolean) => {
-  const enzymeBridgeImpl = await new EnzymeBridgeFactory(await getFirstSigner()).deploy();
-  await insertContractAddressInDb(eContractid.EnzymeBridge, enzymeBridgeImpl.address);
-  return withSaveAndVerify(enzymeBridgeImpl, eContractid.EnzymeBridge, [], verify);
-};
-
 export const deployLendingPool = async (verify?: boolean) => {
   const libraries = await deployAaveLibraries(verify);
-  console.log('Deployed libs');
-  console.log('Deploying Lending pool now');
   const lendingPoolImpl = await new LendingPoolFactory(libraries, await getFirstSigner()).deploy();
-  console.log('Deployed Lending pool now');
   await insertContractAddressInDb(eContractid.LendingPoolImpl, lendingPoolImpl.address);
   return withSaveAndVerify(lendingPoolImpl, eContractid.LendingPool, [], verify);
 };

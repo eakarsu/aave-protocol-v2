@@ -225,7 +225,7 @@ contract LendingPoolCollateralManager is
     }
 
     // Transfers the debt asset being repaid to the aToken, where the liquidity is kept
-    IERC20(debtAsset).transferFrom(
+    IERC20(debtAsset).safeTransferFrom(
       msg.sender,
       debtReserve.aTokenAddress,
       vars.actualDebtToLiquidate

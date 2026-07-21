@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "sourceId": "aave-v2-certora-2020",
+      "sourceType": "audit",
+      "authorityId": "certora",
+      "title": "Aave V2 formal verification report",
+      "publisher": "Certora",
+      "sourceUrl": "https://github.com/aave/protocol-v2/blob/master/audits/Certora-FV-aave-v2-03-12-2020.pdf",
+      "jurisdiction": "protocol-global",
+      "effectiveAt": "2020-12-03T00:00:00Z",
+      "retrievedAt": "2026-07-19T00:00:00Z",
+      "contentSha256": "83b8f4e29a5d17b2cb6af45a87bf78da5695a7c6a7c57f129e5b989ae6132143",
+      "contentPath": "audits/Certora-FV-aave-v2-03-12-2020.pdf"
+    },
+    {
+      "sourceId": "agpl-3.0-license",
+      "sourceType": "contract",
+      "authorityId": "gnu-fsf",
+      "title": "GNU Affero General Public License, version 3",
+      "publisher": "Free Software Foundation",
+      "sourceUrl": "https://www.gnu.org/licenses/agpl-3.0.txt",
+      "jurisdiction": "global-copyright",
+      "effectiveAt": "2007-11-19T00:00:00Z",
+      "retrievedAt": "2026-07-19T00:00:00Z",
+      "contentSha256": "422d833d478a14b5d51d0157c6bd9b752aef4e829cc3f47963c8ae1f7dc26080",
+      "contentPath": "LICENSE.md"
+    }
+  ],
+  "authorityCatalog": [
+    {
+      "authorityId": "us-ecfr",
+      "publisher": "United States Government Publishing Office",
+      "sourceUrl": "https://www.ecfr.gov/",
+      "jurisdictions": ["US"],
+      "ingestionStatus": "pending"
+    },
+    {
+      "authorityId": "eu-official-journal",
+      "publisher": "Publications Office of the European Union",
+      "sourceUrl": "https://eur-lex.europa.eu/oj/direct-access.html",
+      "jurisdictions": ["EU"],
+      "ingestionStatus": "pending"
+    },
+    {
+      "authorityId": "us-sec-edgar",
+      "publisher": "U.S. Securities and Exchange Commission",
+      "sourceUrl": "https://www.sec.gov/edgar/",
+      "jurisdictions": ["US"],
+      "ingestionStatus": "pending"
+    }
+  ]
+}

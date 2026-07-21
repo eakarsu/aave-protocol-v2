@@ -18,7 +18,6 @@ import {IInitializableDebtToken} from '../../interfaces/IInitializableDebtToken.
 import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
 import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
 import {ILendingPoolConfigurator} from '../../interfaces/ILendingPoolConfigurator.sol';
-import 'hardhat/console.sol';
 
 /**
  * @title LendingPoolConfigurator contract
@@ -56,32 +55,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   function initialize(ILendingPoolAddressesProvider provider) public initializer {
     addressesProvider = provider;
     pool = ILendingPool(addressesProvider.getLendingPool());
-  }
-
-  function makeEnzymePool(address fromAsset, address toAsset) external {
-    console.log('makeEnzymePool 1');
-
-    DataTypes.ReserveData memory fromReserve = pool.getReserveData(fromAsset);
-
-    console.log('makeEnzymePool 2');
-
-    pool.initReserve(
-      toAsset,
-      fromReserve.aTokenAddress,
-      fromReserve.stableDebtTokenAddress,
-      fromReserve.variableDebtTokenAddress,
-      fromReserve.interestRateStrategyAddress
-    );
-    console.log('makeEnzymePool 3');
-
-    DataTypes.ReserveData memory toReserve = pool.getReserveData(toAsset);
-    console.log('makeEnzymePool 4');
-    toReserve.configuration.data = fromReserve.configuration.data;
-    console.log('makeEnzymePool 5');
-    toReserve.configuration.setBorrowingEnabled(true);
-    console.log('makeEnzymePool 6');
-    toReserve.configuration.setStableRateBorrowingEnabled(true);
-    console.log('makeEnzymePool 7');
   }
 
   /**

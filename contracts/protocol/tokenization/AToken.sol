@@ -127,29 +127,9 @@ contract AToken is
     require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
     _burn(user, amountScaled);
 
-    IERC20(_underlyingAsset).transfer(receiverOfUnderlying, amount);
+    IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
 
     emit Transfer(user, address(0), amount);
-    emit Burn(user, receiverOfUnderlying, amount, index);
-  }
-
-  /**
-   * @dev Burns aTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`
-   * - Only callable by the LendingPool, as extra state updates there need to be managed
-   * @param user The owner of the aTokens, getting them burned
-   * @param receiverOfUnderlying The address that will receive the underlying
-   * @param amount The amount being burned
-   **/
-  function justBurn(
-    address user,
-    address receiverOfUnderlying,
-    uint256 amount,
-    uint256 index
-  ) external override onlyLendingPool {
-    uint256 amountScaled = amount.rayDiv(index);
-    require(amountScaled != 0, Errors.CT_INVALID_BURN_AMOUNT);
-    _burn(user, amountScaled);
-
     emit Burn(user, receiverOfUnderlying, amount, index);
   }
 
@@ -331,7 +311,7 @@ contract AToken is
     onlyLendingPool
     returns (uint256)
   {
-    IERC20(_underlyingAsset).transfer(target, amount);
+    IERC20(_underlyingAsset).safeTransfer(target, amount);
     return amount;
   }
 

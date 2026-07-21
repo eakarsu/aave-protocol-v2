@@ -83,10 +83,6 @@ export { LendingPoolAddressesProviderRegistryFactory } from "./LendingPoolAddres
 export type { LendingPoolAddressesProviderRegistry } from "./LendingPoolAddressesProviderRegistry";
 export { DefaultReserveInterestRateStrategyFactory } from "./DefaultReserveInterestRateStrategyFactory";
 export type { DefaultReserveInterestRateStrategy } from "./DefaultReserveInterestRateStrategy";
-export { EnzymeBridgeFactory } from "./EnzymeBridgeFactory";
-export type { EnzymeBridge } from "./EnzymeBridge";
-export { EnzymeLendingPoolManagerFactory } from "./EnzymeLendingPoolManagerFactory";
-export type { EnzymeLendingPoolManager } from "./EnzymeLendingPoolManager";
 export { LendingPoolFactory } from "./LendingPoolFactory";
 export type { LendingPool } from "./LendingPool";
 export { LendingPoolCollateralManagerFactory } from "./LendingPoolCollateralManagerFactory";

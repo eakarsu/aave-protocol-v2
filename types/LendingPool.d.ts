@@ -33,16 +33,13 @@ interface LendingPoolInterface extends ethers.utils.Interface {
     "getAddressesProvider()": FunctionFragment;
     "getConfiguration(address)": FunctionFragment;
     "getReserveData(address)": FunctionFragment;
-    "getReserveDataForUser(uint256)": FunctionFragment;
     "getReserveNormalizedIncome(address)": FunctionFragment;
     "getReserveNormalizedVariableDebt(address)": FunctionFragment;
     "getReservesList()": FunctionFragment;
     "getUserAccountData(address)": FunctionFragment;
-    "getUserConfig(address,uint256)": FunctionFragment;
     "getUserConfiguration(address)": FunctionFragment;
     "initReserve(address,address,address,address,address)": FunctionFragment;
     "initialize(address)": FunctionFragment;
-    "isUserEmptyConfig(address)": FunctionFragment;
     "liquidationCall(address,address,address,uint256,bool)": FunctionFragment;
     "paused()": FunctionFragment;
     "rebalanceStableBorrowRate(address,address)": FunctionFragment;
@@ -108,10 +105,6 @@ interface LendingPoolInterface extends ethers.utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "getReserveDataForUser",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getReserveNormalizedIncome",
     values: [string]
   ): string;
@@ -128,10 +121,6 @@ interface LendingPoolInterface extends ethers.utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "getUserConfig",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getUserConfiguration",
     values: [string]
   ): string;
@@ -140,10 +129,6 @@ interface LendingPoolInterface extends ethers.utils.Interface {
     values: [string, string, string, string, string]
   ): string;
   encodeFunctionData(functionFragment: "initialize", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "isUserEmptyConfig",
-    values: [string]
-  ): string;
   encodeFunctionData(
     functionFragment: "liquidationCall",
     values: [string, string, string, BigNumberish, boolean]
@@ -215,10 +200,6 @@ interface LendingPoolInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getReserveDataForUser",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getReserveNormalizedIncome",
     data: BytesLike
   ): Result;
@@ -235,10 +216,6 @@ interface LendingPoolInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getUserConfig",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getUserConfiguration",
     data: BytesLike
   ): Result;
@@ -247,10 +224,6 @@ interface LendingPoolInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "isUserEmptyConfig",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "liquidationCall",
     data: BytesLike
@@ -478,7 +451,6 @@ export class LendingPool extends Contract {
         variableDebtTokenAddress: string;
         interestRateStrategyAddress: string;
         id: number;
-        vaultAddress: string;
         0: { data: BigNumber; 0: BigNumber };
         1: BigNumber;
         2: BigNumber;
@@ -491,7 +463,6 @@ export class LendingPool extends Contract {
         9: string;
         10: string;
         11: number;
-        12: string;
       };
     }>;
 
@@ -512,7 +483,6 @@ export class LendingPool extends Contract {
         variableDebtTokenAddress: string;
         interestRateStrategyAddress: string;
         id: number;
-        vaultAddress: string;
         0: { data: BigNumber; 0: BigNumber };
         1: BigNumber;
         2: BigNumber;
@@ -525,19 +495,8 @@ export class LendingPool extends Contract {
         9: string;
         10: string;
         11: number;
-        12: string;
       };
     }>;
-
-    getReserveDataForUser(
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "getReserveDataForUser(uint256)"(
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
 
     getReserveNormalizedIncome(
       asset: string,
@@ -611,18 +570,6 @@ export class LendingPool extends Contract {
       5: BigNumber;
     }>;
 
-    getUserConfig(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "getUserConfig(address,uint256)"(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
     getUserConfiguration(
       user: string,
       overrides?: CallOverrides
@@ -662,16 +609,6 @@ export class LendingPool extends Contract {
 
     "initialize(address)"(
       provider: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    isUserEmptyConfig(
-      user: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "isUserEmptyConfig(address)"(
-      user: string,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
@@ -925,7 +862,6 @@ export class LendingPool extends Contract {
     variableDebtTokenAddress: string;
     interestRateStrategyAddress: string;
     id: number;
-    vaultAddress: string;
     0: { data: BigNumber; 0: BigNumber };
     1: BigNumber;
     2: BigNumber;
@@ -938,7 +874,6 @@ export class LendingPool extends Contract {
     9: string;
     10: string;
     11: number;
-    12: string;
   }>;
 
   "getReserveData(address)"(
@@ -957,7 +892,6 @@ export class LendingPool extends Contract {
     variableDebtTokenAddress: string;
     interestRateStrategyAddress: string;
     id: number;
-    vaultAddress: string;
     0: { data: BigNumber; 0: BigNumber };
     1: BigNumber;
     2: BigNumber;
@@ -970,18 +904,7 @@ export class LendingPool extends Contract {
     9: string;
     10: string;
     11: number;
-    12: string;
   }>;
-
-  getReserveDataForUser(
-    reserveOrder: BigNumberish,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "getReserveDataForUser(uint256)"(
-    reserveOrder: BigNumberish,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
 
   getReserveNormalizedIncome(
     asset: string,
@@ -1043,18 +966,6 @@ export class LendingPool extends Contract {
     5: BigNumber;
   }>;
 
-  getUserConfig(
-    user: string,
-    reserveOrder: BigNumberish,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "getUserConfig(address,uint256)"(
-    user: string,
-    reserveOrder: BigNumberish,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
   getUserConfiguration(
     user: string,
     overrides?: CallOverrides
@@ -1090,16 +1001,6 @@ export class LendingPool extends Contract {
 
   "initialize(address)"(
     provider: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  isUserEmptyConfig(
-    user: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "isUserEmptyConfig(address)"(
-    user: string,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
@@ -1349,7 +1250,6 @@ export class LendingPool extends Contract {
       variableDebtTokenAddress: string;
       interestRateStrategyAddress: string;
       id: number;
-      vaultAddress: string;
       0: { data: BigNumber; 0: BigNumber };
       1: BigNumber;
       2: BigNumber;
@@ -1362,7 +1262,6 @@ export class LendingPool extends Contract {
       9: string;
       10: string;
       11: number;
-      12: string;
     }>;
 
     "getReserveData(address)"(
@@ -1381,7 +1280,6 @@ export class LendingPool extends Contract {
       variableDebtTokenAddress: string;
       interestRateStrategyAddress: string;
       id: number;
-      vaultAddress: string;
       0: { data: BigNumber; 0: BigNumber };
       1: BigNumber;
       2: BigNumber;
@@ -1394,25 +1292,6 @@ export class LendingPool extends Contract {
       9: string;
       10: string;
       11: number;
-      12: string;
-    }>;
-
-    getReserveDataForUser(
-      reserveOrder: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<{
-      0: string;
-      1: BigNumber;
-      2: BigNumber;
-    }>;
-
-    "getReserveDataForUser(uint256)"(
-      reserveOrder: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<{
-      0: string;
-      1: BigNumber;
-      2: BigNumber;
     }>;
 
     getReserveNormalizedIncome(
@@ -1475,24 +1354,6 @@ export class LendingPool extends Contract {
       5: BigNumber;
     }>;
 
-    getUserConfig(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<{
-      0: boolean;
-      1: boolean;
-    }>;
-
-    "getUserConfig(address,uint256)"(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<{
-      0: boolean;
-      1: boolean;
-    }>;
-
     getUserConfiguration(
       user: string,
       overrides?: CallOverrides
@@ -1527,16 +1388,6 @@ export class LendingPool extends Contract {
       provider: string,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    isUserEmptyConfig(
-      user: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    "isUserEmptyConfig(address)"(
-      user: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
 
     liquidationCall(
       collateralAsset: string,
@@ -1863,16 +1714,6 @@ export class LendingPool extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getReserveDataForUser(
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "getReserveDataForUser(uint256)"(
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
     getReserveNormalizedIncome(
       asset: string,
       overrides?: CallOverrides
@@ -1907,18 +1748,6 @@ export class LendingPool extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getUserConfig(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "getUserConfig(address,uint256)"(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
     getUserConfiguration(
       user: string,
       overrides?: CallOverrides
@@ -1951,13 +1780,6 @@ export class LendingPool extends Contract {
 
     "initialize(address)"(
       provider: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    isUserEmptyConfig(user: string, overrides?: Overrides): Promise<BigNumber>;
-
-    "isUserEmptyConfig(address)"(
-      user: string,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
@@ -2215,16 +2037,6 @@ export class LendingPool extends Contract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getReserveDataForUser(
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "getReserveDataForUser(uint256)"(
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
     getReserveNormalizedIncome(
       asset: string,
       overrides?: CallOverrides
@@ -2259,18 +2071,6 @@ export class LendingPool extends Contract {
     "getUserAccountData(address)"(
       user: string,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getUserConfig(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "getUserConfig(address,uint256)"(
-      user: string,
-      reserveOrder: BigNumberish,
-      overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
     getUserConfiguration(
@@ -2308,16 +2108,6 @@ export class LendingPool extends Contract {
 
     "initialize(address)"(
       provider: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    isUserEmptyConfig(
-      user: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "isUserEmptyConfig(address)"(
-      user: string,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 

@@ -11,10 +11,6 @@ import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {DataTypes} from '../types/DataTypes.sol';
-import {IAToken} from '../../../interfaces/IAToken.sol';
-import 'hardhat/console.sol';
-import {Errors} from '../../libraries/helpers/Errors.sol';
-import {ILendingPoolAddressesProvider} from '../../../interfaces/ILendingPoolAddressesProvider.sol';
 
 /**
  * @title GenericLogic library
@@ -66,7 +62,6 @@ library GenericLogic {
     uint256 reservesCount,
     address oracle
   ) external view returns (bool) {
-    console.log('balanceDecreaseAllowed begin ');
     if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id)) {
       return true;
     }
@@ -78,7 +73,6 @@ library GenericLogic {
       .getParams();
 
     if (vars.liquidationThreshold == 0) {
-      console.log('balanceDecreaseAllowed:liquidationThreshold:%d', vars.liquidationThreshold);
       return true;
     }
 
@@ -89,7 +83,6 @@ library GenericLogic {
       vars.avgLiquidationThreshold,
 
     ) = calculateUserAccountData(user, reservesData, userConfig, reserves, reservesCount, oracle);
-    console.log('balanceDecreaseAllowed after  calculateUserAccountData');
 
     if (vars.totalDebtInETH == 0) {
       return true;
@@ -98,10 +91,8 @@ library GenericLogic {
     vars.amountToDecreaseInETH = IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(
       10**vars.decimals
     );
-    console.log('balanceDecreaseAllowed amountToDecreaseInETH:%d', vars.amountToDecreaseInETH);
 
     vars.collateralBalanceAfterDecrease = vars.totalCollateralInETH.sub(vars.amountToDecreaseInETH);
-    console.log('balanceDecreaseAllowed amountToDecreaseInETH:%d', vars.amountToDecreaseInETH);
 
     //if there is a borrow, there can't be 0 collateral
     if (vars.collateralBalanceAfterDecrease == 0) {
@@ -113,10 +104,6 @@ library GenericLogic {
       .mul(vars.avgLiquidationThreshold)
       .sub(vars.amountToDecreaseInETH.mul(vars.liquidationThreshold))
       .div(vars.collateralBalanceAfterDecrease);
-    console.log(
-      'balanceDecreaseAllowed liquidationThresholdAfterDecrease:%d',
-      vars.liquidationThresholdAfterDecrease
-    );
 
     uint256 healthFactorAfterDecrease =
       calculateHealthFactorFromBalances(
@@ -124,10 +111,6 @@ library GenericLogic {
         vars.totalDebtInETH,
         vars.liquidationThresholdAfterDecrease
       );
-    console.log(
-      'balanceDecreaseAllowed healthFactorAfterDecrease:%d',
-      vars.healthFactorAfterDecrease
-    );
     return healthFactorAfterDecrease >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
   }
 
@@ -193,54 +176,39 @@ library GenericLogic {
 
       vars.currentReserveAddress = reserves[vars.i];
       DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
-      console.log('calculateUserAccountData: atoken:%d', currentReserve.aTokenAddress);
-      vars.currentReserveAddress = IAToken(currentReserve.aTokenAddress).UNDERLYING_ASSET_ADDRESS();
 
       (vars.ltv, vars.liquidationThreshold, , vars.decimals, ) = currentReserve
         .configuration
         .getParams();
 
-      console.log('liquidationThreshold: %d', vars.liquidationThreshold);
-
       vars.tokenUnit = 10**vars.decimals;
       vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
-      console.log('vars.currentReserveAddress:%s', vars.currentReserveAddress);
-      console.log('reserveUnitPrice: %d', vars.reserveUnitPrice);
-      console.logBool(userConfig.isUsingAsCollateral(vars.i));
 
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
-        console.log('compoundedLiquidityBalance: %d', vars.compoundedLiquidityBalance);
 
         uint256 liquidityBalanceETH =
           vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
-        console.log('liquidityBalanceETH: %d', liquidityBalanceETH);
 
         vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
-        console.log('totalCollateralInETH: %d', vars.totalCollateralInETH);
 
         vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
         vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
           liquidityBalanceETH.mul(vars.liquidationThreshold)
         );
-        console.log('avgLiquidationThreshold: %d', vars.avgLiquidationThreshold);
       }
 
       if (userConfig.isBorrowing(vars.i)) {
         vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
           user
         );
-        console.log('compoundedBorrowBalance: %d', vars.compoundedBorrowBalance);
-
         vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
           IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user)
         );
-        console.log('compoundedBorrowBalance: %d', vars.compoundedBorrowBalance);
 
         vars.totalDebtInETH = vars.totalDebtInETH.add(
           vars.reserveUnitPrice.mul(vars.compoundedBorrowBalance).div(vars.tokenUnit)
         );
-        console.log('totalDebtInETH: %d', vars.totalDebtInETH);
       }
     }
 
@@ -248,15 +216,12 @@ library GenericLogic {
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
-    console.log('avgLiquidationThreshold: %d', vars.avgLiquidationThreshold);
 
     vars.healthFactor = calculateHealthFactorFromBalances(
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
       vars.avgLiquidationThreshold
     );
-    console.log('healthFactor: %d', vars.healthFactor);
-
     return (
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
@@ -305,15 +270,5 @@ library GenericLogic {
 
     availableBorrowsETH = availableBorrowsETH.sub(totalDebtInETH);
     return availableBorrowsETH;
-  }
-
-  function getEnzymeBridge(ILendingPoolAddressesProvider _addressesProvider)
-    external
-    returns (address)
-  {
-    bytes32 contractId = 'EnzymeBridgeId';
-    address enzymeBridgeAddress = _addressesProvider.getAddress(contractId);
-    console.log('Borrow obtained bridge:%s', enzymeBridgeAddress);
-    return enzymeBridgeAddress;
   }
 }

@@ -1,8 +1,9 @@
 // @ts-ignore
-import { HardhatNetworkForkingUserConfig, HardhatUserConfig } from 'hardhat/types';
+import { HardhatNetworkForkingUserConfig } from 'hardhat/types';
 import {
   eAvalancheNetwork,
   eEthereumNetwork,
+  eNetwork,
   ePolygonNetwork,
   eXDaiNetwork,
   iParamsPerNetwork,
@@ -15,46 +16,95 @@ const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
 const TENDERLY_FORK_ID = process.env.TENDERLY_FORK_ID || '';
 const FORK = process.env.FORK || '';
 const FORK_BLOCK_NUMBER = process.env.FORK_BLOCK_NUMBER
-  ? parseInt(process.env.FORK_BLOCK_NUMBER)
+  ? parseInt(process.env.FORK_BLOCK_NUMBER, 10)
   : 0;
-
+const UNCONFIGURED_RPC = 'https://rpc.invalid';
 const GWEI = 1000 * 1000 * 1000;
 
-export const buildForkConfig = (): HardhatNetworkForkingUserConfig | undefined => {
-  let forkMode;
-  if (FORK) {
-    forkMode = {
-      url: NETWORKS_RPC_URL[FORK],
-    };
-    if (FORK_BLOCK_NUMBER || BLOCK_TO_FORK[FORK]) {
-      forkMode.blockNumber = FORK_BLOCK_NUMBER || BLOCK_TO_FORK[FORK];
-    }
+const explicitRpc = (network: string): string =>
+  process.env[`RPC_URL_${network.toUpperCase()}`] || '';
+
+export const assertSafeRpcUrl = (rawUrl: string, network: string): string => {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch (_) {
+    throw new Error(`RPC URL for ${network} is not a valid URL`);
   }
-  return forkMode;
+
+  const localHost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  if (parsed.protocol !== 'https:' && !(localHost && parsed.protocol === 'http:')) {
+    throw new Error(`RPC URL for ${network} must use verified HTTPS (HTTP is local-only)`);
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error(`RPC URL for ${network} must not contain userinfo credentials`);
+  }
+  return parsed.toString();
+};
+
+const ethereumRpc = (network: eEthereumNetwork): string => {
+  const configured = explicitRpc(network);
+  if (configured) return assertSafeRpcUrl(configured, network);
+  if (ALCHEMY_KEY) {
+    const host = network === eEthereumNetwork.main ? 'eth-mainnet' : `eth-${network}`;
+    return assertSafeRpcUrl(`https://${host}.g.alchemy.com/v2/${ALCHEMY_KEY}`, network);
+  }
+  if (INFURA_KEY) {
+    const host = network === eEthereumNetwork.main ? 'mainnet' : network;
+    return assertSafeRpcUrl(`https://${host}.infura.io/v3/${INFURA_KEY}`, network);
+  }
+  return UNCONFIGURED_RPC;
 };
 
 export const NETWORKS_RPC_URL: iParamsPerNetwork<string> = {
-  [eEthereumNetwork.kovan]: ALCHEMY_KEY
-    ? `https://eth-kovan.alchemyapi.io/v2/${ALCHEMY_KEY}`
-    : `https://kovan.infura.io/v3/${INFURA_KEY}`,
-  [eEthereumNetwork.ropsten]: ALCHEMY_KEY
-    ? `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_KEY}`
-    : `https://ropsten.infura.io/v3/${INFURA_KEY}`,
-  [eEthereumNetwork.main]: ALCHEMY_KEY
-    ? `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`
-    : `https://mainnet.infura.io/v3/${INFURA_KEY}`,
-  [eEthereumNetwork.coverage]: 'http://localhost:8555',
-  [eEthereumNetwork.hardhat]: 'http://localhost:8545',
-  [eEthereumNetwork.buidlerevm]: 'http://localhost:8545',
-  [eEthereumNetwork.tenderly]: `https://rpc.tenderly.co/fork/`,
-  [ePolygonNetwork.mumbai]: 'https://rpc-mumbai.maticvigil.com',
-  [ePolygonNetwork.matic]:
-    // 'https://rpc-mainnet.maticvigil.com/v1/e616b9ddc7598ffae92629f8145614d55094c722',
-    'https://polygon-mainnet.g.alchemy.com/v2/6NUmfWDZw6lC3RPAphj0p_2vm7ElOn2U',
-  // [ePolygonNetwork.matic]: 'https://rpc-mainnet.matic.network',
-  [eXDaiNetwork.xdai]: 'https://rpc.xdaichain.com/',
-  [eAvalancheNetwork.avalanche]: 'https://api.avax.network/ext/bc/C/rpc',
-  [eAvalancheNetwork.fuji]: 'https://api.avax-test.network/ext/bc/C/rpc',
+  [eEthereumNetwork.kovan]: ethereumRpc(eEthereumNetwork.kovan),
+  [eEthereumNetwork.ropsten]: ethereumRpc(eEthereumNetwork.ropsten),
+  [eEthereumNetwork.main]: ethereumRpc(eEthereumNetwork.main),
+  [eEthereumNetwork.coverage]: 'http://127.0.0.1:8555',
+  [eEthereumNetwork.hardhat]: 'http://127.0.0.1:8545',
+  [eEthereumNetwork.buidlerevm]: 'http://127.0.0.1:8545',
+  [eEthereumNetwork.tenderly]: explicitRpc(eEthereumNetwork.tenderly)
+    ? assertSafeRpcUrl(explicitRpc(eEthereumNetwork.tenderly), eEthereumNetwork.tenderly)
+    : TENDERLY_FORK_ID
+    ? assertSafeRpcUrl(
+        `https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}`,
+        eEthereumNetwork.tenderly
+      )
+    : UNCONFIGURED_RPC,
+  [ePolygonNetwork.mumbai]: explicitRpc(ePolygonNetwork.mumbai)
+    ? assertSafeRpcUrl(explicitRpc(ePolygonNetwork.mumbai), ePolygonNetwork.mumbai)
+    : 'https://rpc-mumbai.maticvigil.com/',
+  [ePolygonNetwork.matic]: explicitRpc(ePolygonNetwork.matic)
+    ? assertSafeRpcUrl(explicitRpc(ePolygonNetwork.matic), ePolygonNetwork.matic)
+    : UNCONFIGURED_RPC,
+  [eXDaiNetwork.xdai]: explicitRpc(eXDaiNetwork.xdai)
+    ? assertSafeRpcUrl(explicitRpc(eXDaiNetwork.xdai), eXDaiNetwork.xdai)
+    : 'https://rpc.xdaichain.com/',
+  [eAvalancheNetwork.avalanche]: explicitRpc(eAvalancheNetwork.avalanche)
+    ? assertSafeRpcUrl(explicitRpc(eAvalancheNetwork.avalanche), eAvalancheNetwork.avalanche)
+    : 'https://api.avax.network/ext/bc/C/rpc',
+  [eAvalancheNetwork.fuji]: explicitRpc(eAvalancheNetwork.fuji)
+    ? assertSafeRpcUrl(explicitRpc(eAvalancheNetwork.fuji), eAvalancheNetwork.fuji)
+    : 'https://api.avax-test.network/ext/bc/C/rpc',
+};
+
+export const buildForkConfig = (): HardhatNetworkForkingUserConfig | undefined => {
+  if (!FORK) return undefined;
+  if (!Object.prototype.hasOwnProperty.call(NETWORKS_RPC_URL, FORK)) {
+    throw new Error(`Unsupported FORK network: ${FORK}`);
+  }
+
+  const url = NETWORKS_RPC_URL[FORK];
+  if (!url || url === UNCONFIGURED_RPC) {
+    throw new Error(`FORK=${FORK} requires a configured RPC URL or provider key`);
+  }
+  const forkMode: HardhatNetworkForkingUserConfig = {
+    url: assertSafeRpcUrl(url, FORK),
+  };
+  if (FORK_BLOCK_NUMBER || BLOCK_TO_FORK[FORK]) {
+    forkMode.blockNumber = FORK_BLOCK_NUMBER || BLOCK_TO_FORK[FORK];
+  }
+  return forkMode;
 };
 
 export const NETWORKS_DEFAULT_GAS: iParamsPerNetwork<number> = {

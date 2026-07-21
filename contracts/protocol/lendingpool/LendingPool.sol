@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
-import 'hardhat/console.sol';
 
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
@@ -26,10 +25,6 @@ import {ReserveConfiguration} from '../libraries/configuration/ReserveConfigurat
 import {UserConfiguration} from '../libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {LendingPoolStorage} from './LendingPoolStorage.sol';
-
-import {IFundDeployer} from '../../interfaces/IFundDeployer.sol';
-import {IEnzymeBridge} from '../../interfaces/IEnzymeBridge.sol';
-import {IVault} from '../../interfaces/IVault.sol';
 
 /**
  * @title LendingPool contract
@@ -94,21 +89,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     _maxNumberOfReserves = UserConfiguration._maxReserves;
   }
 
-  function debug(address asset, address aTokenAsset) internal {
-    address admin = _addressesProvider.getPoolAdmin();
-    uint256 assetBalance = IERC20(asset).balanceOf(admin);
-    uint256 aTokenAssetBalance = IERC20(aTokenAsset).balanceOf(admin);
-    console.log('New log');
-    console.log('debug Admin assetBalance of %s is %d', asset, assetBalance);
-    console.log('debug Admin aTokenAssetBalance of %s is %d', aTokenAsset, aTokenAssetBalance);
-
-    assetBalance = IERC20(asset).balanceOf(msg.sender);
-    aTokenAssetBalance = IERC20(aTokenAsset).balanceOf(msg.sender);
-    console.log('New log');
-    console.log('debug sender assetBalance of %s is %d', asset, assetBalance);
-    console.log('debug sender aTokenAssetBalance of %s is %d', aTokenAsset, aTokenAssetBalance);
-  }
-
   /**
    * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
    * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
@@ -119,8 +99,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    *   is a different wallet
    * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
    *   0 if the action is executed directly by the user, without any middle-man
-   * User need to approve lendingpool for IERC20(asset).transferFrom(msg.sender, vault, amount);
-   * User can aproove await dai.connect(user2).approve(lendingPool.address,'100')
    **/
   function deposit(
     address asset,
@@ -128,35 +106,21 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address onBehalfOf,
     uint16 referralCode
   ) external override whenNotPaused {
-    console.log('deposit called');
-    //Send deposit into enzyme fund. aToken address will be replaced with fund
-    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
-    (address vault, address comptroller) =
-      IEnzymeBridge(enzymeBridgeAddress).deposit(onBehalfOf, asset, amount);
-
-    //fetch vault reserve instead of asset
     DataTypes.ReserveData storage reserve = _reserves[asset];
-    console.log('deposit_reserves');
-    reserve.updateState();
 
-    //DataTypes.ReserveData storage reserve = _reserves[asset];
     ValidationLogic.validateDeposit(reserve, amount);
-    console.log('deposit validateDeposit');
 
-    //vault aToken is set to its vault address. So we transfer token to vault
     address aToken = reserve.aTokenAddress;
-    console.log('deposit aToken:%s', aToken);
 
-    IERC20(asset).transferFrom(msg.sender, vault, amount);
-    console.log('deposit transferFrom');
+    reserve.updateState();
+    reserve.updateInterestRates(asset, aToken, amount, 0);
+
+    IERC20(asset).safeTransferFrom(msg.sender, aToken, amount);
 
     bool isFirstDeposit = IAToken(aToken).mint(onBehalfOf, amount, reserve.liquidityIndex);
-    console.log('deposit IAToken');
 
     if (isFirstDeposit) {
-      console.log('deposit before setUsingAsCollateral');
       _usersConfig[onBehalfOf].setUsingAsCollateral(reserve.id, true);
-      console.log('deposit after setUsingAsCollateral');
       emit ReserveUsedAsCollateralEnabled(asset, onBehalfOf);
     }
 
@@ -179,10 +143,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 amount,
     address to
   ) external override whenNotPaused returns (uint256) {
-    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
-
-    address userVault = IEnzymeBridge(enzymeBridgeAddress).getUserVault(to, asset);
-
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     address aToken = reserve.aTokenAddress;
@@ -205,19 +165,16 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _reservesCount,
       _addressesProvider.getPriceOracle()
     );
+
     reserve.updateState();
+    reserve.updateInterestRates(asset, aToken, 0, amountToWithdraw);
 
     if (amountToWithdraw == userBalance) {
       _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, false);
       emit ReserveUsedAsCollateralDisabled(asset, msg.sender);
     }
 
-    //just burn only atokens
-    IAToken(aToken).justBurn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
-    //userVault will burn amount aToken and transfer underlying asset to user
-    address underlyingAssetAddress = IAToken(aToken).UNDERLYING_ASSET_ADDRESS();
-    IVault(userVault).transferUnderlyingTo(underlyingAssetAddress, to, amountToWithdraw);
-    //IAToken(aToken).burn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
+    IAToken(aToken).burn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
 
     emit Withdraw(asset, msg.sender, to, amountToWithdraw);
 
@@ -246,18 +203,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint16 referralCode,
     address onBehalfOf
   ) external override whenNotPaused {
-    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
-
-    address commonVaultAddress = IEnzymeBridge(enzymeBridgeAddress).getCommonVault(asset);
-
-    (address vault, address comptroller) =
-      IEnzymeBridge(enzymeBridgeAddress).borrow(
-        asset,
-        amount,
-        interestRateMode,
-        onBehalfOf,
-        _reservesCount
-      );
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     _executeBorrow(
@@ -269,10 +214,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         interestRateMode,
         reserve.aTokenAddress,
         referralCode,
-        true,
-        vault,
-        comptroller,
-        commonVaultAddress
+        true
       )
     );
   }
@@ -287,8 +229,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param onBehalfOf Address of the user who will get his debt reduced/removed. Should be the address of the
    * user calling the function if he wants to reduce/remove his own debt, or the address of any other
    * other borrower whose debt should be removed
-   * User need to approve lendingpool for IERC20(asset).transferFrom(msg.sender, userVault, paybackAmount);
-   * User can aproove await dai.connect(user2).approve(lendingPool.address,'100')
    * @return The final amount repaid
    **/
   function repay(
@@ -297,10 +237,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 rateMode,
     address onBehalfOf
   ) external override whenNotPaused returns (uint256) {
-    address enzymeBridgeAddress = GenericLogic.getEnzymeBridge(_addressesProvider);
-
-    address userVault = IEnzymeBridge(enzymeBridgeAddress).getUserVault(onBehalfOf, asset);
-
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     (uint256 stableDebt, uint256 variableDebt) = Helpers.getUserCurrentDebt(onBehalfOf, reserve);
@@ -335,13 +271,16 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       );
     }
 
+    address aToken = reserve.aTokenAddress;
+    reserve.updateInterestRates(asset, aToken, paybackAmount, 0);
+
     if (stableDebt.add(variableDebt).sub(paybackAmount) == 0) {
       _usersConfig[onBehalfOf].setBorrowing(reserve.id, false);
     }
 
-    IERC20(asset).transferFrom(msg.sender, userVault, paybackAmount);
+    IERC20(asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
 
-    IVault(userVault).handleRepayment(msg.sender, paybackAmount);
+    IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
 
     emit Repay(asset, onBehalfOf, msg.sender, paybackAmount);
 
@@ -549,6 +488,73 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint16 referralCode
   ) external override whenNotPaused {
     FlashLoanLocalVars memory vars;
+
+    ValidationLogic.validateFlashloan(assets, amounts);
+
+    address[] memory aTokenAddresses = new address[](assets.length);
+    uint256[] memory premiums = new uint256[](assets.length);
+
+    vars.receiver = IFlashLoanReceiver(receiverAddress);
+
+    for (vars.i = 0; vars.i < assets.length; vars.i++) {
+      aTokenAddresses[vars.i] = _reserves[assets[vars.i]].aTokenAddress;
+      premiums[vars.i] = amounts[vars.i].mul(_flashLoanPremiumTotal).div(10000);
+      IAToken(aTokenAddresses[vars.i]).transferUnderlyingTo(receiverAddress, amounts[vars.i]);
+    }
+
+    require(
+      vars.receiver.executeOperation(assets, amounts, premiums, msg.sender, params),
+      Errors.LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN
+    );
+
+    for (vars.i = 0; vars.i < assets.length; vars.i++) {
+      vars.currentAsset = assets[vars.i];
+      vars.currentAmount = amounts[vars.i];
+      vars.currentPremium = premiums[vars.i];
+      vars.currentATokenAddress = aTokenAddresses[vars.i];
+      vars.currentAmountPlusPremium = vars.currentAmount.add(vars.currentPremium);
+
+      if (DataTypes.InterestRateMode(modes[vars.i]) == DataTypes.InterestRateMode.NONE) {
+        _reserves[vars.currentAsset].updateState();
+        _reserves[vars.currentAsset].cumulateToLiquidityIndex(
+          IERC20(vars.currentATokenAddress).totalSupply(),
+          vars.currentPremium
+        );
+        _reserves[vars.currentAsset].updateInterestRates(
+          vars.currentAsset,
+          vars.currentATokenAddress,
+          vars.currentAmountPlusPremium,
+          0
+        );
+
+        IERC20(vars.currentAsset).safeTransferFrom(
+          receiverAddress,
+          vars.currentATokenAddress,
+          vars.currentAmountPlusPremium
+        );
+      } else {
+        _executeBorrow(
+          ExecuteBorrowParams(
+            vars.currentAsset,
+            msg.sender,
+            onBehalfOf,
+            vars.currentAmount,
+            modes[vars.i],
+            vars.currentATokenAddress,
+            referralCode,
+            false
+          )
+        );
+      }
+      emit FlashLoan(
+        receiverAddress,
+        msg.sender,
+        vars.currentAsset,
+        vars.currentAmount,
+        vars.currentPremium,
+        referralCode
+      );
+    }
   }
 
   /**
@@ -838,43 +844,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address aTokenAddress;
     uint16 referralCode;
     bool releaseUnderlying;
-    address vaultAddress;
-    address comptroller;
-    address commonVaultAddress;
-  }
-
-  function getUserConfig(address user, uint256 reserveOrder)
-    external
-    override
-    returns (bool, bool)
-  {
-    DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
-    return (
-      userConfig.isUsingAsCollateralOrBorrowing(reserveOrder),
-      userConfig.isUsingAsCollateral(reserveOrder)
-    );
-  }
-
-  function isUserEmptyConfig(address user) external override returns (bool) {
-    DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
-    return userConfig.isEmpty();
-  }
-
-  function getReserveDataForUser(uint256 reserveOrder)
-    external
-    override
-    returns (
-      address,
-      uint256,
-      uint256
-    )
-  {
-    address currentReserveAddress = _reservesList[reserveOrder];
-    DataTypes.ReserveData storage currentReserve = _reserves[currentReserveAddress];
-
-    (uint256 ltv, uint256 liquidationThreshold, , uint256 decimals, ) =
-      currentReserve.configuration.getParams();
-    return (currentReserve.aTokenAddress, liquidationThreshold, decimals);
   }
 
   function _executeBorrow(ExecuteBorrowParams memory vars) internal {
@@ -887,7 +856,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       IPriceOracleGetter(oracle).getAssetPrice(vars.asset).mul(vars.amount).div(
         10**reserve.configuration.getDecimals()
       );
-    reserve.vaultAddress = vars.commonVaultAddress;
+
     ValidationLogic.validateBorrow(
       vars.asset,
       reserve,
@@ -930,15 +899,15 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       userConfig.setBorrowing(reserve.id, true);
     }
 
+    reserve.updateInterestRates(
+      vars.asset,
+      vars.aTokenAddress,
+      0,
+      vars.releaseUnderlying ? vars.amount : 0
+    );
+
     if (vars.releaseUnderlying) {
-      //borrow from common fund to user private vault created
-      address underlyingAssetAddress = IAToken(vars.aTokenAddress).UNDERLYING_ASSET_ADDRESS();
-      IVault(vars.commonVaultAddress).transferUnderlyingTo(
-        underlyingAssetAddress,
-        vars.vaultAddress,
-        vars.amount
-      );
-      //IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
+      IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
     }
 
     emit Borrow(

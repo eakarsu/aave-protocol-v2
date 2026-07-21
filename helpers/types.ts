@@ -49,8 +49,6 @@ export enum AavePools {
 }
 
 export enum eContractid {
-  EnzymeBridge = 'EnzymeBridge',
-  EnzymeLendingPoolManager = 'EnzymeLendingPoolManager',
   Example = 'Example',
   LendingPoolAddressesProvider = 'LendingPoolAddressesProvider',
   MintableERC20 = 'MintableERC20',

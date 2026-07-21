@@ -23,12 +23,11 @@ require('dotenv').config();
 
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
-import 'temp-hardhat-etherscan';
+import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-gas-reporter';
 import 'hardhat-typechain';
 import '@tenderly/hardhat-tenderly';
 import 'solidity-coverage';
-import { fork } from 'child_process';
 
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
 const DEFAULT_BLOCK_GAS_LIMIT = 8000000;
@@ -38,8 +37,6 @@ const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
 const MNEMONIC_PATH = "m/44'/60'/0'/0";
 const MNEMONIC = process.env.MNEMONIC || '';
 const UNLIMITED_BYTECODE_SIZE = process.env.UNLIMITED_BYTECODE_SIZE === 'true';
-console.log ("XXXXXXXX mnemonic:"+MNEMONIC);
-const mnemonic=MNEMONIC;
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
@@ -50,38 +47,29 @@ if (!SKIP_LOAD) {
         .filter((pth) => pth.includes('.ts'))
         .forEach((task) => {
           require(`${tasksPath}/${task}`);
-        });
+      });
     }
   );
+  require(`${path.join(__dirname, 'tasks/misc')}/set-bre.ts`);
 }
 
-require(`${path.join(__dirname, 'tasks/misc')}/set-bre.ts`);
-
 const getCommonNetworkConfig = (networkName: eNetwork, networkId: number) => ({
-  //url: NETWORKS_RPC_URL[networkName],
-  url: "https://eth-kovan.alchemyapi.io/v2/gURHc2znmQ9VlBz0e4qlQSsXia-SgqOj",
-  //hardfork: HARDFORK,
+  url: NETWORKS_RPC_URL[networkName],
+  hardfork: HARDFORK,
   blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
   gasMultiplier: DEFAULT_GAS_MUL,
   gasPrice: NETWORKS_DEFAULT_GAS[networkName],
   chainId: networkId,
 
-  accounts: [
-    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-    '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
-    '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
-    //`${process.env.KEY}`
-  ],
-  /*
-  accounts: {
-    mnemonic: MNEMONIC,
-    path: MNEMONIC_PATH,
-    initialIndex: 0,
-    count: 20,
-  },*/
+  accounts: MNEMONIC
+    ? {
+        mnemonic: MNEMONIC,
+        path: MNEMONIC_PATH,
+        initialIndex: 0,
+        count: 20,
+      }
+    : [],
 });
-
-let forkMode;
 
 const buidlerConfig: HardhatUserConfig = {
 
@@ -131,24 +119,10 @@ const buidlerConfig: HardhatUserConfig = {
       chainId: 1,//BUIDLEREVM_CHAINID,
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,
-      accounts: [
-        {
-          privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-          balance: '100000000000000000000000000000000000000',
-        },
-        {
-          privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
-          balance: '100000000000000000000000000000000000000',
-        },
-        {
-          privateKey: '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
-          balance: '100000000000000000000000000000000000000',
-        },
-      ],
-      /*accounts: accounts.map(({ secretKey, balance }: { secretKey: string; balance: string }) => ({
+      accounts: accounts.map(({ secretKey, balance }: { secretKey: string; balance: string }) => ({
         privateKey: secretKey,
         balance,
-      })),*/
+      })),
       forking: buildForkConfig(),
     },
 
@@ -164,11 +138,7 @@ const buidlerConfig: HardhatUserConfig = {
     },
     localhost: {
 
-      accounts: [
-        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-        '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
-        '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
-      ],
+      accounts: accounts.map(({ secretKey }: { secretKey: string }) => secretKey),
       gas: 9000,
       chainId: 1,
       //chainId: 31337,
@@ -177,29 +147,9 @@ const buidlerConfig: HardhatUserConfig = {
       //url: 'http://34.68.190.98/ws2/'
       url: 'http://localhost:8545'
     },
-   localhost_rinkeby: {
-      url: 'http://localhost:8545',
-      hardfork: 'istanbul',
-      accounts: {
-        accountsBalance: "1000000",
-        count: 10,
-        mnemonic,
-      },
-      chainId: 31337,
-      forking: {
-        blockNumber: 12540501,
-        url: "https://arb-rinkeby.g.alchemy.com/v2/g8G-zouiT8oYNKHn7d4aZqGkd_8vWZpU"
-      }
-    },
-
     ganache: {
       url: 'http://ganache:8545',
-      accounts: {
-        mnemonic: 'fox sight canyon orphan hotel grow hedgehog build bless august weather swarm',
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 20,
-      },
+      accounts: accounts.map(({ secretKey }: { secretKey: string }) => secretKey),
     },
   },
 };
